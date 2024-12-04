@@ -1,1 +1,7 @@
-A Catan-like game made with Node js, Pixi js, Typescript, and some kind of DB probably
+My submission for Ubisoft NEXT 2025, in the technical art category, it consists of 2 major parts:
+
+
+- A novel Wave function collapse algorithm implementation to procedurally generate a cabin/campground
+- A super extensible and performant terrain system, utilizing the marching cubes algorithm and GPU acceleration
+
+
