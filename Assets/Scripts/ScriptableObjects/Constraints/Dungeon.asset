@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b24544f9630f0e944af6640d507da95f, type: 3}
+  m_Name: Dungeon
+  m_EditorClassIdentifier: 
+  cellStates:
+  - weight: 1
+    prefab: {fileID: 5354603738110452084, guid: d9c9c19bc6dcff34188f2bab06ee4be3, type: 3}
+  - weight: 1
+    prefab: {fileID: 448618358591639048, guid: 2b5a5520f5bf08145848003e6f91b712, type: 3}
+  - weight: 1
+    prefab: {fileID: 2337012815417341273, guid: f8e8a3f664cfaa24288b8465512579b6, type: 3}
+  - weight: 1
+    prefab: {fileID: 3042607598963298978, guid: d2d4ea4d6d813ee48a70d266b5cde9f4, type: 3}
+  - weight: 1
+    prefab: {fileID: 7970896726277208275, guid: 99cfd9a98205d6e45a8694f99ac17af8, type: 3}
+  - weight: 1
+    prefab: {fileID: 4098288093382696694, guid: d11f45fa6d5c8644e93b99f9e8e63cf1, type: 3}
+  adjacencyConstraints: []
