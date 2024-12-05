@@ -437,7 +437,7 @@ GameObject:
   - component: {fileID: 1825533185}
   - component: {fileID: 1825533186}
   m_Layer: 0
-  m_Name: WFCManager
+  m_Name: LevelGenerator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -473,9 +473,11 @@ MonoBehaviour:
   gridResolution: 2
   gridBounds:
     position: {x: 0, y: 0, z: 0}
-    xExtends: 1
+    xExtends: 2
     yExtends: 0
-    zExtends: 1
+    zExtends: 2
+  constraint: {fileID: 11400000, guid: 88e39136b74b7614387dfdeec2002051, type: 2}
+  levelParent: {fileID: 1825533185}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

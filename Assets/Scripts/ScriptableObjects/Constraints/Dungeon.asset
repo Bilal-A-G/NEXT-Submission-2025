@@ -12,17 +12,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b24544f9630f0e944af6640d507da95f, type: 3}
   m_Name: Dungeon
   m_EditorClassIdentifier: 
-  cellStates:
-  - weight: 1
-    prefab: {fileID: 5354603738110452084, guid: d9c9c19bc6dcff34188f2bab06ee4be3, type: 3}
-  - weight: 1
-    prefab: {fileID: 448618358591639048, guid: 2b5a5520f5bf08145848003e6f91b712, type: 3}
-  - weight: 1
-    prefab: {fileID: 2337012815417341273, guid: f8e8a3f664cfaa24288b8465512579b6, type: 3}
-  - weight: 1
-    prefab: {fileID: 3042607598963298978, guid: d2d4ea4d6d813ee48a70d266b5cde9f4, type: 3}
-  - weight: 1
-    prefab: {fileID: 7970896726277208275, guid: 99cfd9a98205d6e45a8694f99ac17af8, type: 3}
-  - weight: 1
-    prefab: {fileID: 4098288093382696694, guid: d11f45fa6d5c8644e93b99f9e8e63cf1, type: 3}
-  adjacencyConstraints: []
+  prefabs:
+  - {fileID: 5354603738110452084, guid: 9c568744388dcea48ab52c7105e8e238, type: 3}
+  - {fileID: 5354603738110452084, guid: d9c9c19bc6dcff34188f2bab06ee4be3, type: 3}
+  - {fileID: 4098288093382696694, guid: d11f45fa6d5c8644e93b99f9e8e63cf1, type: 3}
+  - {fileID: 7970896726277208275, guid: 99cfd9a98205d6e45a8694f99ac17af8, type: 3}
+  - {fileID: 448618358591639048, guid: 2b5a5520f5bf08145848003e6f91b712, type: 3}
+  - {fileID: 2337012815417341273, guid: f8e8a3f664cfaa24288b8465512579b6, type: 3}
+  - {fileID: 3042607598963298978, guid: d2d4ea4d6d813ee48a70d266b5cde9f4, type: 3}
+  adjacencyConstraints:
+  - up: ffffffff
+    down: ffffffff
+    left: 01000000ffffffff
+    right: 05000000ffffffff
+    forwards: 00000000ffffffff
+    backwards: 0200000000000000
+  - up: ffffffff
+    down: ffffffff
+    left: ffffffff
+    right: 00000000
+    forwards: 01000000ffffffff
+    backwards: 0400000001000000
+  - up: ffffffff
+    down: ffffffff
+    left: 04000000
+    right: 03000000
+    forwards: 00000000
+    backwards: ffffffff
+  - up: ffffffff
+    down: ffffffff
+    left: 02000000
+    right: ffffffff
+    forwards: 05000000
+    backwards: ffffffff
+  - up: ffffffff
+    down: ffffffff
+    left: ffffffff
+    right: 02000000
+    forwards: 01000000
+    backwards: ffffffff
+  - up: ffffffff
+    down: ffffffff
+    left: 00000000
+    right: ffffffff
+    forwards: 05000000ffffffff
+    backwards: 0300000005000000
+  nullPrefab: {fileID: 5354603738110452084, guid: 9c568744388dcea48ab52c7105e8e238, type: 3}
