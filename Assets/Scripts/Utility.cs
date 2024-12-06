@@ -24,6 +24,10 @@ public struct Bounds
     [Range(0, 100)] public int yExtends;
     [Tooltip("How far does the grid extend in the Z axis from the center in cells")]
     [Range(0, 100)] public int zExtends;
+
+    public int GetWidth() => xExtends * 2 + 1;
+    public int GetHeight() => yExtends + 1;
+    public int GetDepth() => zExtends * 2 + 1;
 }
 
 public class Utility : MonoBehaviour
@@ -55,20 +59,35 @@ public class Utility : MonoBehaviour
         }
     }
 
+    public static bool IsIndexOutOfBounds(Vector3Int index, Bounds bounds)
+    {
+        return (index.x > bounds.GetWidth() - 1 || index.x < 0) ||
+               (index.y > bounds.GetHeight() - 1 || index.y < 0) || 
+               (index.z > bounds.GetDepth() - 1 || index.z < 0);
+    }
+
+    public static bool isIndexAtBounds(Vector3Int index, Bounds bounds)
+    {
+        return (index.x == bounds.GetWidth() - 1 || index.x == 0) ||
+               (index.y == bounds.GetHeight() - 1 || index.y == 0) ||
+               (index.z == bounds.GetDepth() - 1 || index.z == 0);
+    }
+
+    //TODO, check if we actually need direction as an argument here
     public static bool IsIndexWithinBoundsInDirection(Vector3Int index, Bounds bounds, Direction direction)
     {
         switch (direction)
         {
             case Direction.Up:
-                return index.y < bounds.yExtends + 1;
+                return index.y < bounds.GetHeight();
             case Direction.Down:
                 return index.y >= 0;
             case Direction.Left:
                 return index.x >= 0;
             case Direction.Right:
-                return index.x < bounds.xExtends * 2 + 1;
+                return index.x < bounds.GetWidth();
             case Direction.Forwards:
-                return index.z < bounds.zExtends * 2 + 1;
+                return index.z < bounds.GetDepth();
             case Direction.Backwards:
                 return index.z >= 0;
             case Direction.Length:

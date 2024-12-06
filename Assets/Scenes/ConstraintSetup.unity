@@ -346,12 +346,19 @@ MonoBehaviour:
   constraint: {fileID: 11400000, guid: 88e39136b74b7614387dfdeec2002051, type: 2}
   bounds:
     position: {x: 0, y: 0, z: 0}
-    xExtends: 2
+    xExtends: 4
     yExtends: 0
     zExtends: 4
   cellScale: 1
   sampleOffset: 1.19
   nullPrefabName: Null
+  gridTransparency: 0.088
+  chunkBounds:
+    position: {x: 0, y: 0, z: 0}
+    xExtends: 1
+    yExtends: 0
+    zExtends: 1
+  chunkTransparency: 1
 --- !u!1001 &1483971695
 PrefabInstance:
   m_ObjectHideFlags: 0

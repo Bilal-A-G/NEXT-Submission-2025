@@ -15,7 +15,9 @@ namespace ModelSynthesis
         private Constraint _constraint;
         private Transform _displayParent;
 
-        public bool touched = false;
+        private GameObject _visualRepresentation;
+
+        public Vector3Int lastTouchedByIndex = new Vector3Int(-1, -1, -1);
         public bool collapsed = false;
 
         public Cell(Vector3 position, List<int> cellStates, float cellSize, 
@@ -29,36 +31,41 @@ namespace ModelSynthesis
             this.cellStates = cellStates;
         }
 
-        public void TryCollapse()
+        public bool TryCollapse()
         {
             if (cellStates.Count != 1 || collapsed)
-                return;
-            
+                return false;
+
             collapsed = true;
+            
             Display();
+            return true;
         }
 
-        public void ForceCollapse()
+        public bool ForceCollapse()
         {
             if(collapsed || cellStates.Count <= 1)
-                return;
+                return false;
             
             collapsed = true;
             int random = cellStates[Random.Range(0, cellStates.Count)];
             cellStates.Clear();
             cellStates.Add(random);
             Display();
+
+            return true;
         }
 
         private void Display()
         {
-            if(cellStates.Count != 1)
-                return;
-            
             GameObject cellModel = Object.Instantiate(_constraint.GetPrefabAtIndex(cellStates[^1]), _displayParent);
             cellModel.transform.position = _position;
-            cellModel.transform.localScale *= _cellSize; 
+            cellModel.transform.localScale *= _cellSize;
+            _visualRepresentation = cellModel;
         }
+
+        public void DeleteModel() => Object.Destroy(_visualRepresentation);
+        
     }
 
     public class LevelGenerator : MonoBehaviour
@@ -67,12 +74,19 @@ namespace ModelSynthesis
         [SerializeField] private float gridResolution;
 
         [SerializeField] private Bounds gridBounds;
+        [SerializeField] private Bounds chunkBounds;
+        [Range(0, 1)] [SerializeField] private float gridTransparency;
+        [Range(0, 1)] [SerializeField] private float chunkTransparency;
         [SerializeField] private Constraint constraint;
         [SerializeField] private Transform levelParent;
 
+        //TEMP, used as a failsafe during development to not crash the editor
+        //But, it really shouldn't be necessary
+        [SerializeField] private int maxIterations;
+
         private Cell[,,] _cells;
         private InputSystem_Actions _inputSystem;
-
+        
         private void OnDisable()
         {
             _inputSystem.Disable();
@@ -82,15 +96,91 @@ namespace ModelSynthesis
         {
             _inputSystem = new InputSystem_Actions();
             _inputSystem.Enable();
+            
             _inputSystem.Player.Refresh.performed += ctx =>
             {
                 GenerateLevel();
             };
-            
-            GenerateLevel();
         }
 
-        //[ContextMenu("Generate Level")]
+         private void Update()
+         {
+             //GenerateLevel();
+         }
+
+        private bool GenerateChunk(int chunksX, int chunksY, int chunksZ, int i)
+        {
+            Vector3Int chunkOffset = new Vector3Int((i % chunksX),
+                ((i % (chunksY * chunksX)) / chunksX),
+                (i / (chunksX * chunksY)));
+
+            List<(Vector3Int, Cell)> border = new List<(Vector3Int, Cell)>();
+            
+            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 _) =>
+            {
+                //"UnCollapse" the wave function on the cells in our chunk
+                Vector3Int gridSpaceIndex = arrayIndex + chunkOffset;
+                Vector3 worldPosition = (new Vector3(gridSpaceIndex.x - gridBounds.xExtends, 
+                    gridSpaceIndex.y, gridSpaceIndex.z - gridBounds.zExtends) + gridBounds.position) * gridResolution;
+                
+                List<int> allStates = new List<int>();
+                Cell currentCell = _cells[gridSpaceIndex.x, gridSpaceIndex.y, gridSpaceIndex.z];
+                
+                currentCell.DeleteModel();
+                
+                for (int j = 0; j < constraint.GetPrefabCount(); j++)
+                    allStates.Add(j);
+                
+                _cells[gridSpaceIndex.x, gridSpaceIndex.y, gridSpaceIndex.z] =
+                    new Cell(worldPosition, allStates, gridResolution, constraint, levelParent);
+                
+                //Do not proceed past this point if we're not a border index
+                if (!Utility.isIndexAtBounds(arrayIndex, chunkBounds)) 
+                    return;
+                
+                for (int j = 0; j < (int)Direction.Length; j++)
+                {
+                    //If index is out of bounds of grid, then continue
+                    Vector3Int directionVector = Utility.DirectionEnumToVector((Direction)j);
+                    Vector3Int gridSpaceNeighbourIndex = gridSpaceIndex + directionVector;
+                    if(!Utility.IsIndexWithinBoundsInDirection(gridSpaceNeighbourIndex, gridBounds, (Direction)j))
+                        continue;
+
+                    //If index is within bounds of the chunk then continue
+                    Vector3Int chunkSpaceNeighbourIndex = arrayIndex + directionVector;
+                    if(!Utility.IsIndexOutOfBounds(chunkSpaceNeighbourIndex, chunkBounds))
+                        continue;
+                        
+                    //What we're left with is a chunk neighbour. A cell that borders the chunk without being in it
+                    Cell neighbour = _cells[gridSpaceNeighbourIndex.x, 
+                        gridSpaceNeighbourIndex.y, gridSpaceNeighbourIndex.z];
+                        
+                    border.Add((gridSpaceNeighbourIndex, neighbour));
+                }
+                
+            }, chunkBounds, gridResolution);
+
+            int collapsed = 0;
+            for (int j = 0; j < border.Count; j++)
+            {
+                PropagateChanges(border[j].Item1, border[j].Item2, ref collapsed, border[j].Item1);
+            }
+            
+            int currentIteration = 0;
+                
+            //Collapse until we run out of cells
+            bool stop = false;
+            int numCollapsed = collapsed;
+            while (!stop && currentIteration < maxIterations)
+            {
+                stop = CollapseRoutine(chunkBounds, chunkOffset, ref numCollapsed);
+                currentIteration++;
+            }
+
+            //Regenerate false if we fail
+            return (currentIteration < maxIterations) && (numCollapsed >= chunksX * chunksY * chunksZ) && stop;
+        }
+        
         private void GenerateLevel()
         {
             for (int i = 0; i < levelParent.childCount; i++)
@@ -98,32 +188,48 @@ namespace ModelSynthesis
                 Destroy(levelParent.GetChild(i).gameObject);
             }
             
+            int chunksX = gridBounds.GetWidth() - chunkBounds.GetWidth() + 1;
+            int chunksY = gridBounds.GetHeight() - chunkBounds.GetHeight() + 1;
+            int chunksZ = gridBounds.GetDepth() - chunkBounds.GetDepth() + 1;
+            
             _cells = new Cell[gridBounds.xExtends * 2 + 1, gridBounds.yExtends + 1, gridBounds.zExtends * 2 + 1];
+            
+            //Initialize all cells to be null
             Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 _) =>
             {
-                //Creating an array, where each element has the same value as it's index
-                List<int> allStates = new List<int>();
-
-                for (int i = 0; i < constraint.GetPrefabCount(); i++)
-                    allStates.Add(i);
-                
-                
-                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = new Cell(cellPosition, allStates, 
+                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = new Cell(cellPosition, 
+                    new List<int>(){constraint.GetPrefabIndex(null)}, 
                     gridResolution, constraint, levelParent);
+                
+                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z].TryCollapse();
             }, gridBounds, gridResolution);
-
-            //Collapse until we run out of cells
-            int lowestEntropyFound = CollapseRoutine();
-            while (lowestEntropyFound < int.MaxValue)
+            
+            //This might seem silly, but I don't want to type out a 3d array, so I'm flattening and
+            //reshaping
+            for (int i = 0; i < chunksX * chunksY * chunksZ; i++)
             {
-                lowestEntropyFound = CollapseRoutine();
+                bool success = GenerateChunk(chunksX, chunksY, chunksZ, i);
+                int breakAt = 0;
+                for (int j = 0; j < 1000; j++)
+                {
+                    breakAt++;
+                    
+                    if (success)
+                        break;
+                    
+                    success = GenerateChunk(chunksX, chunksY, chunksZ, i);
+                }
+                
+                Debug.Log("Terminated chunk generation at iteration " + breakAt);
+                Debug.Log("Chunk generation success = " + success);
             }
         }
 
         //Recursively propagates changes to a cell neighbour across the entire grid
-        private void PropagateChanges(Vector3Int arrayIndex, Cell current)
+        private void PropagateChanges(Vector3Int arrayIndex, Cell current, ref int collapsed, Vector3Int initiator)
         {
-            current.TryCollapse();
+            if (current.TryCollapse())
+                collapsed++;
 
             for (int i = 0; i < (int)Direction.Length; i++)
             {
@@ -159,56 +265,58 @@ namespace ModelSynthesis
                     continue;
                 Cell next = _cells[nextIndex.x, nextIndex.y, nextIndex.z];
                 
-                if(next.touched)
+                if(next.lastTouchedByIndex != initiator)
                     continue;
 
-                next.touched = true;
-                PropagateChanges(nextIndex, next);                                                                              
+                next.lastTouchedByIndex = initiator;
+                PropagateChanges(nextIndex, next, ref collapsed, initiator);                                                                              
             }
         }
 
         //One iteration of the wave function collapse algorithm
-        private int CollapseRoutine()
+        private bool CollapseRoutine(Bounds bounds, Vector3Int offset, ref int collapsed)
         {
-            int lowestEntropy = int.MaxValue;
-            Vector3Int lowestEntropyIndex = Vector3Int.zero;
-
+            Vector3Int cellIndex = new Vector3Int(-1, 0, 0);
+            bool found = false;
+            
             Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 _) =>
             {
-                Cell current = _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z];
-                if (current.collapsed || current.cellStates.Count > lowestEntropy) 
-                    return;
+                Vector3Int cellArrayIndex = arrayIndex + offset;
 
-                //If current has same as lowest, then flip a coin to see if
-                //we choose this or not
-                int random = Random.Range(0, 2);
-                if(current.cellStates.Count == lowestEntropy && random == 0)
+                Cell current = _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z];
+                if (current.cellStates.Count < 1)
                     return;
                 
-                lowestEntropy = current.cellStates.Count;
-                lowestEntropyIndex = arrayIndex;
-            }, gridBounds, gridResolution);
+                if (current.collapsed || found) 
+                    return;
 
-            Cell lowestEntropyCell = _cells[lowestEntropyIndex.x, lowestEntropyIndex.y, lowestEntropyIndex.z];
-            lowestEntropyCell.ForceCollapse();
-            PropagateChanges(lowestEntropyIndex, lowestEntropyCell);
+                cellIndex = cellArrayIndex;
+                found = true;
+            }, bounds, gridResolution);
             
-            //Kinda brute force, would be nice to not loop
-            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 _) =>
-            {
-                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z].touched = false;
-            }, gridBounds, gridResolution);
+            //Failed to find an un-collapsed cell
+            if (!found)
+                return true;
+            
+            Cell currentCell = _cells[cellIndex.x, cellIndex.y, cellIndex.z];
+            if(currentCell.ForceCollapse())
+                collapsed++;
+            PropagateChanges(cellIndex, currentCell, ref collapsed, cellIndex);
 
-            return lowestEntropy;
+            return false;
         }
 
         private void OnDrawGizmos()
         {
             Utility.LoopOverAllCells((Vector3Int _, Vector3 cellPosition, Vector3 _) =>
             {
-                Gizmos.color = Color.green;
+                Gizmos.color = new Color(0, 255, 0, gridTransparency);
                 Gizmos.DrawWireCube(cellPosition, Vector3.one * gridResolution);         
             }, gridBounds, gridResolution);
+
+            Gizmos.color = new Color(0, 0, 255, chunkTransparency);
+            Gizmos.DrawWireCube(gridBounds.position, 
+                new Vector3(chunkBounds.GetWidth(), chunkBounds.GetHeight(), chunkBounds.GetDepth()) * gridResolution);
         }
     }
 }

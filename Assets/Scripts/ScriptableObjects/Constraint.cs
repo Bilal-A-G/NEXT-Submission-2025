@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ModelSynthesis;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -26,6 +27,7 @@ public class Constraint : ScriptableObject
     [SerializeField] private List<GameObject> prefabs;
     public List<Adjacencies> adjacencyConstraints;
     [SerializeField] private int nullPrefabIndex;
+    public Chunk[] chunks;
 
     public void ResetAdjacencies()
     {
