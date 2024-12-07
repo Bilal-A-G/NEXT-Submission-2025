@@ -677,7 +677,6 @@ MonoBehaviour:
     zExtends: 4
   cellScale: 1
   sampleOffset: 1.19
-  nullPrefabName: Null
   gridTransparency: 0.088
   chunkBounds:
     position: {x: 0, y: 0, z: 0}

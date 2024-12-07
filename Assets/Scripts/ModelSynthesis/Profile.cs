@@ -5,6 +5,12 @@ using UnityEngine;
 namespace ModelSynthesis
 {
     [System.Serializable]
+    public class Chunk
+    {
+        public List<int> cells = new();
+    }
+    
+    [System.Serializable]
 //This stores all adjacent state indices
     public class AdjacencyConstraint
     {
@@ -58,6 +64,7 @@ namespace ModelSynthesis
         [SerializeField] private List<State> allStates;
         [SerializeField] private int nullPrefabIndex;
         [HideInInspector] public Chunk[] chunks;
+        [SerializeField] public int perceptualDistanceThreshold;
 
         public void ResetStates() => allStates = new List<State>();
     
@@ -158,17 +165,6 @@ namespace ModelSynthesis
                 default:
                     throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
             }
-        }
-
-        public List<State> GetStatesFromStateIndices(List<int> stateIndices)
-        {
-            List<State> toReturn = new List<State>();
-            foreach (int index in stateIndices)
-            {
-                toReturn.Add(allStates[index]);
-            }
-
-            return toReturn;
         }
     }
 }

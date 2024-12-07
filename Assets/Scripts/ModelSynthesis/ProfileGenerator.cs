@@ -1,34 +1,20 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace ModelSynthesis
 {
-    [System.Serializable]
-    public struct Chunk
-    {
-        private GameObject[,,] _cells;
-
-        public Chunk(Bounds bounds)
-        {
-            _cells = new GameObject[bounds.GetWidth(), bounds.GetHeight(), bounds.GetDepth()];
-        }
-        
-        public void SetCellAtIndex(Vector3Int index, GameObject toSet) => _cells[index.x, index.y, index.z] = toSet;
-        public GameObject GetCellAtIndex(Vector3Int index) => _cells[index.x, index.y, index.z];
-    }
-
     //This class bakes adjacency constraints from a user made level
     //and stores it in a scriptable object,
     //this object can then be used to procedurally generate a new level
     public class ProfileGenerator : MonoBehaviour
     {
-        [FormerlySerializedAs("constraint")] [SerializeField] private Profile profile;
+        [SerializeField] private Profile profile;
         [SerializeField] private Bounds bounds;
         [SerializeField] private float cellScale;
         [Range(1, 20)]
         [SerializeField] private float sampleOffset;
-        [SerializeField] private string nullPrefabName;
         [Range(0, 1)] [SerializeField] private float gridTransparency;
 
         [SerializeField] private Bounds chunkBounds;
@@ -44,7 +30,7 @@ namespace ModelSynthesis
 
             _cells = new (GameObject, Vector3)[bounds.GetWidth(), bounds.GetHeight(), bounds.GetDepth()];
             
-            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
+            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 _, Vector3 samplePosition) =>
             {
                 Collider[] collisions = new Collider[1];
                 Physics.OverlapBoxNonAlloc(samplePosition,
@@ -73,7 +59,7 @@ namespace ModelSynthesis
                 _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = (prefab, collided.rotation.eulerAngles);
             }, bounds, cellScale, sampleOffset);
 
-            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
+            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 _, Vector3 _) =>
             {
                 (GameObject, Vector3) cellContains = _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z];
                 int stateIndex = profile.GetStateIndex(profile.GetPrefabIndex(cellContains.Item1), cellContains.Item2);
@@ -106,15 +92,19 @@ namespace ModelSynthesis
 
             for (int i = 0; i < _chunks.Length; i++)
             {
-                Chunk currentChunk = new Chunk(chunkBounds);
+                Chunk currentChunk = new Chunk();
                 Vector3Int chunkOffset = new Vector3Int((i % chunksX) * chunkBounds.GetWidth(),
                     ((i % (chunksY * chunksX)) / chunksX) * chunkBounds.GetHeight(),
                     (i / (chunksX * chunksY)) * chunkBounds.GetDepth());
                 
-                Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
+                Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 _, Vector3 _) =>
                 {
                     Vector3Int cellArrayIndex = arrayIndex + chunkOffset;
-                    currentChunk.SetCellAtIndex(arrayIndex, _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z].Item1);
+                    (GameObject, Vector3) tuple = _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z];
+                    int stateIndex = profile.GetStateIndex(profile.GetPrefabIndex(tuple.Item1), 
+                        tuple.Item1 != null ? tuple.Item2 : Vector3.zero);
+                    
+                    currentChunk.cells.Add(stateIndex);
                 }, chunkBounds, cellScale, sampleOffset);
 
                 _chunks[i] = currentChunk;

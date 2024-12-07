@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum Direction : int
@@ -58,6 +60,8 @@ public class Utility : MonoBehaviour
             }
         }
     }
+
+    public static int PerceptualDistance(List<int> a, List<int> b) => a.Count - a.Intersect(b).Count();
 
     public static bool IsIndexOutOfBounds(Vector3Int index, Bounds bounds)
     {

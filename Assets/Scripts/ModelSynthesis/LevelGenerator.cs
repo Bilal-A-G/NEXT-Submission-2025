@@ -1,75 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 namespace ModelSynthesis
 {
-    public class Cell
-    {
-        private Vector3 _position;
-        public List<int> cellStates;
-        private float _cellSize;
-        private Profile _profile;
-        private Transform _displayParent;
-
-        private GameObject _visualRepresentation;
-
-        public Vector3Int lastTouchedByIndex = new Vector3Int(-1, -1, -1);
-        public bool collapsed = false;
-
-        public Cell(Vector3 position, List<int> cellStates, float cellSize, 
-            Profile profile, Transform displayParent)
-        {
-            _position = position;
-            _cellSize = cellSize;
-            _profile = profile;
-            _displayParent = displayParent;
-
-            this.cellStates = cellStates;
-        }
-
-        public bool TryCollapse()
-        {
-            if (cellStates.Count != 1 || collapsed)
-                return false;
-
-            collapsed = true;
-            
-            Display();
-            return true;
-        }
-
-        public bool ForceCollapse()
-        {
-            if(collapsed || cellStates.Count <= 1)
-                return false;
-            
-            collapsed = true;
-            int random = cellStates[Random.Range(0, cellStates.Count)];
-            cellStates.Clear();
-            cellStates.Add(random);
-            Display();
-
-            return true;
-        }
-
-        private void Display()
-        {
-            GameObject cellModel = Object.Instantiate(_profile.GetPrefabAtStateIndex(cellStates[^1]), _displayParent);
-            cellModel.transform.position = _position;
-            cellModel.transform.localScale *= _cellSize;
-            cellModel.transform.eulerAngles = _profile.GetRotationAtStateIndex(cellStates[^1]);
-            _visualRepresentation = cellModel;
-        }
-
-        public void DeleteModel() => Object.Destroy(_visualRepresentation);
-        
-    }
-
     public class LevelGenerator : MonoBehaviour
     {
         [Tooltip("The side length of a grid cell in meters")]
@@ -162,7 +97,7 @@ namespace ModelSynthesis
                 
             }, chunkBounds, gridResolution);
             
-            int collapsed = 0;
+            List<int> collapsed = new List<int>();
             for (int j = 0; j < border.Count; j++)
             {
                 PropagateChanges(border[j].Item1, border[j].Item2, ref collapsed, border[j].Item1);
@@ -172,15 +107,14 @@ namespace ModelSynthesis
                 
             //Collapse until we run out of cells
             bool stop = false;
-            int numCollapsed = collapsed;
             while (!stop && currentIteration < maxSynthesisIterations)
             {
-                stop = CollapseRoutine(chunkBounds, chunkOffset, ref numCollapsed);
+                stop = CollapseRoutine(chunkBounds, chunkOffset, ref collapsed);
                 currentIteration++;
             }
 
             //Return false if we fail
-            return (currentIteration < maxSynthesisIterations) && (numCollapsed >= chunksX * chunksY * chunksZ) && stop;
+            return (currentIteration < maxSynthesisIterations) && (collapsed.Count >= chunksX * chunksY * chunksZ) && stop;
         }
         
         private void GenerateLevel()
@@ -224,10 +158,10 @@ namespace ModelSynthesis
         }
 
         //Recursively propagates changes to a cell neighbour across the entire grid
-        private void PropagateChanges(Vector3Int arrayIndex, Cell current, ref int collapsed, Vector3Int initiator)
+        private void PropagateChanges(Vector3Int arrayIndex, Cell current, ref List<int> collapsed, Vector3Int initiator)
         {
             if (current.TryCollapse())
-                collapsed++;
+                collapsed.Add(current.cellStates[^1]);
 
             for (int i = 0; i < (int)Direction.Length; i++)
             {
@@ -276,7 +210,7 @@ namespace ModelSynthesis
         }
 
         //One iteration of the wave function collapse algorithm
-        private bool CollapseRoutine(Bounds bounds, Vector3Int offset, ref int collapsed)
+        private bool CollapseRoutine(Bounds bounds, Vector3Int offset, ref List<int> collapsed)
         {
             Vector3Int cellIndex = new Vector3Int(-1, 0, 0);
             bool found = false;
@@ -301,8 +235,8 @@ namespace ModelSynthesis
                 return true;
             
             Cell currentCell = _cells[cellIndex.x, cellIndex.y, cellIndex.z];
-            if(currentCell.ForceCollapse())
-                collapsed++;
+            if(currentCell.ForceCollapse(new List<int>(collapsed)))
+                collapsed.Add(currentCell.cellStates[^1]);
             
             PropagateChanges(cellIndex, currentCell, ref collapsed, cellIndex);
 
