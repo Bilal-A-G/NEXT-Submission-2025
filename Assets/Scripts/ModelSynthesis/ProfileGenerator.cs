@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ModelSynthesis
 {
@@ -20,9 +21,9 @@ namespace ModelSynthesis
     //This class bakes adjacency constraints from a user made level
     //and stores it in a scriptable object,
     //this object can then be used to procedurally generate a new level
-    public class ConstraintGenerator : MonoBehaviour
+    public class ProfileGenerator : MonoBehaviour
     {
-        [SerializeField] private Constraint constraint;
+        [FormerlySerializedAs("constraint")] [SerializeField] private Profile profile;
         [SerializeField] private Bounds bounds;
         [SerializeField] private float cellScale;
         [Range(1, 20)]
@@ -33,15 +34,15 @@ namespace ModelSynthesis
         [SerializeField] private Bounds chunkBounds;
         [Range(0, 1)] [SerializeField] private float chunkTransparency;
 
-        private GameObject[,,] _cells;
+        private (GameObject, Vector3 rotation)[,,] _cells;
         private Chunk[] _chunks;
 
         [ContextMenu("Bake")]
         private void Bake()
         {
-            constraint.ResetAdjacencies();
+            profile.ResetStates();
 
-            _cells = new GameObject[bounds.GetWidth(), bounds.GetHeight(), bounds.GetDepth()];
+            _cells = new (GameObject, Vector3)[bounds.GetWidth(), bounds.GetHeight(), bounds.GetDepth()];
             
             Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
             {
@@ -53,6 +54,9 @@ namespace ModelSynthesis
                 if (collided == null)
                     return;
 
+                if (collided.parent != null)
+                    collided = collided.parent;
+                
                 //Prefab utility is editor only, so we can only define constraints in editor,
                 //which should be ok since we shouldn't be messing with the level generation in game
                 PrefabInstanceStatus prefabStatus = PrefabUtility.GetPrefabInstanceStatus(collided.gameObject);
@@ -64,58 +68,31 @@ namespace ModelSynthesis
 
                 //This is temp, in the future it will just assume the prefab has no parent
                 prefab = prefab.transform.parent == null ? prefab : prefab.transform.parent.gameObject;
-
+                
                 Debug.Log("Detected : " + prefab.name);
-                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = prefab;
+                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = (prefab, collided.rotation.eulerAngles);
             }, bounds, cellScale, sampleOffset);
 
-            for (int i = 0; i < constraint.GetPrefabCount(); i++)
+            Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
             {
-                GameObject currentCell = constraint.GetPrefabAtIndex(i);
+                (GameObject, Vector3) cellContains = _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z];
+                int stateIndex = profile.GetStateIndex(profile.GetPrefabIndex(cellContains.Item1), cellContains.Item2);
 
-                //This is awful, we need a loop or something to get rid of the duped code
-                Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
+                for (int i = 0; i < (int)Direction.Length; i++)
                 {
-                    GameObject cellContains = _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z];
-                    if (cellContains != currentCell && (currentCell.name != nullPrefabName || cellContains != null)) 
-                        return;
-                
-                    int negX = arrayIndex.x - 1;
-                    int posX = arrayIndex.x + 1;
+                    Direction currentDirection = (Direction)i;
+                    
+                    Vector3Int neighbourIndex = Utility.DirectionEnumToVector(currentDirection) + arrayIndex;
+                    if(Utility.IsIndexOutOfBounds(neighbourIndex, bounds))
+                        continue;
 
-                    int negY = arrayIndex.y - 1;
-                    int posY = arrayIndex.y + 1;
-
-                    int negZ = arrayIndex.z - 1;
-                    int posZ = arrayIndex.z + 1;
-
-                    GameObject left = negX >= 0 ? _cells[negX, arrayIndex.y, arrayIndex.z] : null;
-                    GameObject right = posX < bounds.xExtends * 2 + 1
-                        ? _cells[posX, arrayIndex.y, arrayIndex.z]
-                        : null;
-
-                    GameObject down = negY >= 0 ? _cells[arrayIndex.x, negY, arrayIndex.z] : null;
-                    GameObject up = posY < bounds.yExtends + 1
-                        ? _cells[arrayIndex.x, posY, arrayIndex.z]
-                        : null;
-
-                    GameObject backwards = negZ >= 0 ? _cells[arrayIndex.x, arrayIndex.y, negZ] : null;
-                    GameObject forwards = posZ < bounds.zExtends * 2 + 1
-                        ? _cells[arrayIndex.x, arrayIndex.y, posZ]
-                        : null;
-
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(left), Direction.Left, i);
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(right), Direction.Right, i);
-                
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(down), Direction.Down, i);
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(up), Direction.Up, i);
-
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(backwards), 
-                        Direction.Backwards, i);
-                    constraint.AddAdjacentIfNotContains(constraint.GetPrefabIndex(forwards), 
-                        Direction.Forwards, i);
-                }, bounds, cellScale);
-            }
+                    (GameObject, Vector3) tuple = _cells[neighbourIndex.x, neighbourIndex.y, neighbourIndex.z];
+                    int neighbourStateIndex = profile.GetStateIndex(profile.GetPrefabIndex(tuple.Item1), 
+                        tuple.Item1 != null ? tuple.Item2 : Vector3.zero);
+                    
+                    profile.AddAdjacencyToStateAtIndex(neighbourStateIndex, currentDirection, stateIndex);
+                }
+            }, bounds, cellScale);
             
             Debug.Log("Generating chunks");
             
@@ -137,13 +114,13 @@ namespace ModelSynthesis
                 Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 samplePosition) =>
                 {
                     Vector3Int cellArrayIndex = arrayIndex + chunkOffset;
-                    currentChunk.SetCellAtIndex(arrayIndex, _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z]);
+                    currentChunk.SetCellAtIndex(arrayIndex, _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z].Item1);
                 }, chunkBounds, cellScale, sampleOffset);
 
                 _chunks[i] = currentChunk;
             }
 
-            constraint.chunks = _chunks;
+            profile.chunks = _chunks;
         
             Debug.Log("Baked all adjacency and chunk data to scriptable object provided!");
         }

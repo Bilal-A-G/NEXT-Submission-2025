@@ -476,6 +476,7 @@ MonoBehaviour:
     xExtends: 2
     yExtends: 0
     zExtends: 2
+  gridPadding: {x: 1, y: 0, z: 1}
   chunkBounds:
     position: {x: 0, y: 0, z: 0}
     xExtends: 1
@@ -483,9 +484,10 @@ MonoBehaviour:
     zExtends: 1
   gridTransparency: 0.169
   chunkTransparency: 1
-  constraint: {fileID: 11400000, guid: 88e39136b74b7614387dfdeec2002051, type: 2}
+  profile: {fileID: 11400000, guid: 88e39136b74b7614387dfdeec2002051, type: 2}
   levelParent: {fileID: 1825533185}
-  maxIterations: 10000
+  maxSynthesisIterations: 100
+  maxChunkIterations: 100
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

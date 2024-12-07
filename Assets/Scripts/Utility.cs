@@ -66,34 +66,11 @@ public class Utility : MonoBehaviour
                (index.z > bounds.GetDepth() - 1 || index.z < 0);
     }
 
-    public static bool isIndexAtBounds(Vector3Int index, Bounds bounds)
+    public static bool IsIndexAtBounds(Vector3Int index, Bounds bounds)
     {
         return (index.x == bounds.GetWidth() - 1 || index.x == 0) ||
                (index.y == bounds.GetHeight() - 1 || index.y == 0) ||
                (index.z == bounds.GetDepth() - 1 || index.z == 0);
-    }
-
-    //TODO, check if we actually need direction as an argument here
-    public static bool IsIndexWithinBoundsInDirection(Vector3Int index, Bounds bounds, Direction direction)
-    {
-        switch (direction)
-        {
-            case Direction.Up:
-                return index.y < bounds.GetHeight();
-            case Direction.Down:
-                return index.y >= 0;
-            case Direction.Left:
-                return index.x >= 0;
-            case Direction.Right:
-                return index.x < bounds.GetWidth();
-            case Direction.Forwards:
-                return index.z < bounds.GetDepth();
-            case Direction.Backwards:
-                return index.z >= 0;
-            case Direction.Length:
-            default:
-                throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
-        }
     }
     
     public static Vector3Int DirectionEnumToVector(Direction direction)
