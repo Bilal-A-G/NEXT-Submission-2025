@@ -30,6 +30,8 @@ namespace ModelSynthesis
         private Cell[,,] _cells;
         private InputSystem_Actions _inputSystem;
         private Bounds _paddedGrid;
+
+        private DateTime time;
         
         private void OnDisable()
         {
@@ -40,16 +42,26 @@ namespace ModelSynthesis
         {
             _inputSystem = new InputSystem_Actions();
             _inputSystem.Enable();
+
+            //time = DateTime.Now;
             
             _inputSystem.Player.Refresh.performed += ctx =>
             {
+                time = DateTime.Now;
                 GenerateLevel();
+                TimeSpan elapsed = DateTime.Now - time;
+                Debug.Log("Generated level in " + elapsed.TotalMilliseconds + " ms");
             };
+            
+            //GenerateLevel();
+            
+            //TimeSpan elapsed = DateTime.Now - time;
+            //Debug.Log("Generated level in " + elapsed.TotalMilliseconds + " ms");
         }
 
         private void Update()
         {
-            GenerateLevel();
+            //GenerateLevel();
         }
 
         private bool GenerateChunk(int chunksX, int chunksY, int chunksZ, int i)
@@ -94,7 +106,7 @@ namespace ModelSynthesis
                     //If index is within the bounds of the grid, then continue
                     if(!Utility.IsIndexOutOfBounds(arrayIndex + directionVector, chunkBounds))
                         continue;
-                    
+ 
                     //What we're left with is a chunk neighbour. A cell that borders the chunk without being in it
                     Cell neighbour = _cells[gridSpaceNeighbourIndex.x, 
                         gridSpaceNeighbourIndex.y, gridSpaceNeighbourIndex.z];
@@ -126,8 +138,7 @@ namespace ModelSynthesis
             
             int numCells = chunkBounds.GetWidth() * chunkBounds.GetHeight() * chunkBounds.GetDepth();
             
-            //Return false if we fail
-            return (currentIteration < maxSynthesisIterations) && (collapsed.Count >= numCells) && stop;
+            return ((currentIteration < maxSynthesisIterations) && (collapsed.Count >= numCells) && stop);
         }
         
         private void GenerateLevel()
@@ -137,6 +148,14 @@ namespace ModelSynthesis
                 Destroy(levelParent.GetChild(i).gameObject);
             }
 
+            _paddedGrid = new Bounds
+            {
+                xExtends = gridBounds.xExtends + gridPadding.x,
+                yExtends = gridBounds.yExtends + gridPadding.y,
+                zExtends = gridBounds.zExtends + gridPadding.z,
+                position = gridBounds.position
+            };
+            
             int chunksX = gridBounds.GetWidth() - chunkBounds.GetWidth() + 1;
             int chunksY = gridBounds.GetHeight() - chunkBounds.GetHeight() + 1;
             int chunksZ = gridBounds.GetDepth() - chunkBounds.GetDepth() + 1;
@@ -150,11 +169,14 @@ namespace ModelSynthesis
                     new List<int>(){profile.GetNullState()}, 
                     gridResolution, profile, levelParent);
                 
+                if (!Utility.IsIndexAtBounds(arrayIndex, _paddedGrid, true))
+                    _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z].initial = true;
+                
                 _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z].TryCollapse();
             }, _paddedGrid, gridResolution);
             
             //This might seem silly, but I don't want to type out a 3d array, so I'm flattening and
-            //reshaping1
+            //reshaping
             for (int i = 0; i < chunksX * chunksY * chunksZ; i++)
             {
                 bool success = false;
@@ -186,12 +208,12 @@ namespace ModelSynthesis
                 
                 Cell next = _cells[nextIndex.x, nextIndex.y, nextIndex.z];
                 
-                List<int> intersection = new List<int>();
+                List<int> intersection = new List<int>(profile.GetStateCount());
                 for (int v = 0; v < current.cellStates.Count(); v++)
                 {
                     List<int> adjacentIndices = profile.GetStateIndicesAdjacentToStateIndex(currentDirection, current.cellStates[v]);
                     List<int> stateIntersections = adjacentIndices.Intersect(next.cellStates).ToList();
-                        
+                    
                     foreach (int stateIntersection in stateIntersections)
                     {
                         if(!intersection.Contains(stateIntersection))
@@ -232,7 +254,9 @@ namespace ModelSynthesis
 
                 Cell current = _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z];
                 if (current.cellStates.Count < 1)
+                {
                     return;
+                }
                 
                 if (current.collapsed) 
                     return;
@@ -243,11 +267,11 @@ namespace ModelSynthesis
             //Failed to find an un-collapsed cell
             if (candidates.Count == 0)
                 return true;
-
+            
             Vector3Int cellIndex = candidates[Random.Range(0, candidates.Count)];
             
             Cell currentCell = _cells[cellIndex.x, cellIndex.y, cellIndex.z];
-            if(currentCell.ForceCollapse(new List<int>(collapsed)))
+            if(currentCell.ForceCollapse())
                 collapsed.Add(currentCell.cellStates[^1]);
             
             PropagateChanges(cellIndex, currentCell, ref collapsed, cellIndex);
@@ -272,7 +296,7 @@ namespace ModelSynthesis
             }, _paddedGrid, gridResolution);
 
             Gizmos.color = new Color(0, 0, 255, chunkTransparency);
-            Gizmos.DrawWireCube(gridBounds.position, 
+            Gizmos.DrawWireCube(chunkBounds.position, 
                 new Vector3(chunkBounds.GetWidth(), chunkBounds.GetHeight(), chunkBounds.GetDepth()) * gridResolution);
         }
     }

@@ -28,11 +28,13 @@ namespace ModelSynthesis
         public int prefabIndex;
         public Vector3 rotation;
         public AdjacencyConstraint adjacencyConstraint;
+        public int weight;
 
         public State(int prefabIndex, Vector3 rotation)
         {
             this.prefabIndex = prefabIndex;
             this.rotation = rotation;
+            weight = 1;
             adjacencyConstraint = new AdjacencyConstraint();
         }
 
@@ -63,7 +65,6 @@ namespace ModelSynthesis
         [SerializeField] private List<GameObject> prefabs;
         [SerializeField] private List<State> allStates;
         [SerializeField] private int nullPrefabIndex;
-        [HideInInspector] public Chunk[] chunks;
         [SerializeField] public int perceptualDistanceThreshold;
 
         public void ResetStates() => allStates = new List<State>();
@@ -96,6 +97,8 @@ namespace ModelSynthesis
 
         public GameObject GetPrefabAtStateIndex(int stateIndex) => GetPrefabAtIndex(allStates[stateIndex].prefabIndex);
         public Vector3 GetRotationAtStateIndex(int stateIndex) => allStates[stateIndex].rotation;
+
+        public int GetWeightAtStateIndex(int stateIndex) => allStates[stateIndex].weight;
     
         public int GetStateIndex(int prefabIndex, Vector3 rotation)
         {

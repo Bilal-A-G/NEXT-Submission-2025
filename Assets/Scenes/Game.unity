@@ -473,9 +473,9 @@ MonoBehaviour:
   gridResolution: 2
   gridBounds:
     position: {x: 0, y: 0, z: 0}
-    xExtends: 3
+    xExtends: 6
     yExtends: 0
-    zExtends: 3
+    zExtends: 6
   gridPadding: {x: 1, y: 0, z: 1}
   chunkBounds:
     position: {x: 0, y: 0, z: 0}

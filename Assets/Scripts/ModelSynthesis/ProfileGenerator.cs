@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace ModelSynthesis
 {
@@ -16,12 +14,8 @@ namespace ModelSynthesis
         [Range(1, 20)]
         [SerializeField] private float sampleOffset;
         [Range(0, 1)] [SerializeField] private float gridTransparency;
-
-        [SerializeField] private Bounds chunkBounds;
-        [Range(0, 1)] [SerializeField] private float chunkTransparency;
-
+        
         private (GameObject, Vector3 rotation)[,,] _cells;
-        private Chunk[] _chunks;
 
         [ContextMenu("Bake")]
         private void Bake()
@@ -82,40 +76,8 @@ namespace ModelSynthesis
                     profile.AddAdjacencyToStateAtIndex(neighbourStateIndex, currentDirection, stateIndex);
                 }
             }, bounds, cellScale);
-            
-            Debug.Log("Generating chunks");
-            
-            //Stride of the chunk is assumed to be the w/h/d, TODO, add checking to make sure you
-            //can't specify a bounds and chunk bounds that are incompatible
-            int chunksX = (bounds.GetWidth() - chunkBounds.GetWidth())/chunkBounds.GetWidth() + 1;
-            int chunksY = (bounds.GetHeight() - chunkBounds.GetHeight())/chunkBounds.GetHeight() + 1;
-            int chunksZ = (bounds.GetDepth() - chunkBounds.GetDepth())/chunkBounds.GetDepth() + 1;
-
-            _chunks = new Chunk[chunksX * chunksY * chunksZ];
-
-            for (int i = 0; i < _chunks.Length; i++)
-            {
-                Chunk currentChunk = new Chunk();
-                Vector3Int chunkOffset = new Vector3Int((i % chunksX) * chunkBounds.GetWidth(),
-                    ((i % (chunksY * chunksX)) / chunksX) * chunkBounds.GetHeight(),
-                    (i / (chunksX * chunksY)) * chunkBounds.GetDepth());
-                
-                Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 _, Vector3 _) =>
-                {
-                    Vector3Int cellArrayIndex = arrayIndex + chunkOffset;
-                    (GameObject, Vector3) tuple = _cells[cellArrayIndex.x, cellArrayIndex.y, cellArrayIndex.z];
-                    int stateIndex = profile.GetStateIndex(profile.GetPrefabIndex(tuple.Item1), 
-                        tuple.Item1 != null ? tuple.Item2 : Vector3.zero);
-                    
-                    currentChunk.cells.Add(stateIndex);
-                }, chunkBounds, cellScale, sampleOffset);
-
-                _chunks[i] = currentChunk;
-            }
-
-            profile.chunks = _chunks;
         
-            Debug.Log("Baked all adjacency and chunk data to scriptable object provided!");
+            Debug.Log("Baked all adjacency data to profile " + profile.name);
         }
 
         //Grid visualization
@@ -129,10 +91,6 @@ namespace ModelSynthesis
                 Gizmos.color = new Color(255, 0, 0, gridTransparency);
                 Gizmos.DrawWireCube(samplePosition, Vector3.one * (1.0f/sampleOffset));
             }, bounds, cellScale, sampleOffset);
-        
-            Gizmos.color = new Color(0, 0, 255, chunkTransparency);
-            Gizmos.DrawWireCube(bounds.position, new Vector3(chunkBounds.xExtends * 2 + 1, 
-                chunkBounds.yExtends + 1, chunkBounds.zExtends * 2 + 1));
         }
     }
 }

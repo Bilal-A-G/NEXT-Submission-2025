@@ -15,6 +15,7 @@ namespace ModelSynthesis
 
         public Vector3Int lastTouchedByIndex = new Vector3Int(-100, -100, -100);
         public bool collapsed = false;
+        public bool initial = false;
 
         public Cell(Vector3 position, List<int> cellStates, float cellSize, 
             Profile profile, Transform displayParent)
@@ -38,7 +39,7 @@ namespace ModelSynthesis
             return true;
         }
 
-        private int PickOptimalState(List<int> currentModel)
+        private int PickOptimalState()
         {
             float[] stateProbabilities = new float[cellStates.Count];
             float[] cumulativeProbabilities = new float[cellStates.Count];
@@ -46,17 +47,9 @@ namespace ModelSynthesis
             
             for (int i = 0; i < stateProbabilities.Length; i++)
             {
-                currentModel.Add(cellStates[i]);
-                for (int j = 0; j < _profile.chunks.Length; j++)
-                {
-                    int perceptualDistance = Utility.PerceptualDistance(currentModel, _profile.chunks[j].cells);
-                    if(perceptualDistance < _profile.perceptualDistanceThreshold)
-                        continue;
-                    
-                    stateProbabilities[i]++;
-                    total++;
-                }
-                currentModel.RemoveAt(currentModel.Count - 1);
+                int weight = _profile.GetWeightAtStateIndex(cellStates[i]);
+                stateProbabilities[i] = weight;
+                total += weight;
             }
 
             float cumulativeSum = 0;
@@ -81,13 +74,13 @@ namespace ModelSynthesis
             return collapsedState;
         }
 
-        public bool ForceCollapse(List<int> currentModel)
+        public bool ForceCollapse()
         {
             if(collapsed || cellStates.Count <= 1)
                 return false;
             
             collapsed = true;
-            int pickedState = PickOptimalState(currentModel);
+            int pickedState = PickOptimalState();
             cellStates.Clear();
             cellStates.Add(pickedState);
             Display();
