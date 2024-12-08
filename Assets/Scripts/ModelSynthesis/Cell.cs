@@ -13,7 +13,7 @@ namespace ModelSynthesis
 
         private GameObject _visualRepresentation;
 
-        public Vector3Int lastTouchedByIndex = new Vector3Int(-1, -1, -1);
+        public Vector3Int lastTouchedByIndex = new Vector3Int(-100, -100, -100);
         public bool collapsed = false;
 
         public Cell(Vector3 position, List<int> cellStates, float cellSize, 

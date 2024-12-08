@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 namespace ModelSynthesis
 {
@@ -45,6 +47,11 @@ namespace ModelSynthesis
             };
         }
 
+        private void Update()
+        {
+            GenerateLevel();
+        }
+
         private bool GenerateChunk(int chunksX, int chunksY, int chunksZ, int i)
         {
             Vector3Int chunkOffset = new Vector3Int((i % chunksX),
@@ -72,7 +79,7 @@ namespace ModelSynthesis
                     new Cell(worldPosition, allStates, gridResolution, profile, levelParent);
                 
                 //Do not proceed past this point if we're not a border index
-                if (!Utility.IsIndexAtBounds(arrayIndex, chunkBounds)) 
+                if (!Utility.IsIndexAtBounds(arrayIndex, chunkBounds, false)) 
                     return;
                 
                 for (int j = 0; j < (int)Direction.Length; j++)
@@ -98,8 +105,12 @@ namespace ModelSynthesis
             }, chunkBounds, gridResolution);
             
             List<int> collapsed = new List<int>();
+            
             for (int j = 0; j < border.Count; j++)
             {
+                if(border[j].Item2.cellStates.Count > 1)
+                    continue;
+                
                 PropagateChanges(border[j].Item1, border[j].Item2, ref collapsed, border[j].Item1);
             }
             
@@ -112,9 +123,11 @@ namespace ModelSynthesis
                 stop = CollapseRoutine(chunkBounds, chunkOffset, ref collapsed);
                 currentIteration++;
             }
-
+            
+            int numCells = chunkBounds.GetWidth() * chunkBounds.GetHeight() * chunkBounds.GetDepth();
+            
             //Return false if we fail
-            return (currentIteration < maxSynthesisIterations) && (collapsed.Count >= chunksX * chunksY * chunksZ) && stop;
+            return (currentIteration < maxSynthesisIterations) && (collapsed.Count >= numCells) && stop;
         }
         
         private void GenerateLevel()
@@ -141,7 +154,7 @@ namespace ModelSynthesis
             }, _paddedGrid, gridResolution);
             
             //This might seem silly, but I don't want to type out a 3d array, so I'm flattening and
-            //reshaping
+            //reshaping1
             for (int i = 0; i < chunksX * chunksY * chunksZ; i++)
             {
                 bool success = false;
@@ -162,7 +175,7 @@ namespace ModelSynthesis
         {
             if (current.TryCollapse())
                 collapsed.Add(current.cellStates[^1]);
-
+            
             for (int i = 0; i < (int)Direction.Length; i++)
             {
                 Direction currentDirection = (Direction)i;
@@ -204,7 +217,6 @@ namespace ModelSynthesis
                     continue;
                 
                 next.lastTouchedByIndex = initiator;
-                
                 PropagateChanges(nextIndex, next, ref collapsed, initiator);
             }
         }
@@ -212,8 +224,7 @@ namespace ModelSynthesis
         //One iteration of the wave function collapse algorithm
         private bool CollapseRoutine(Bounds bounds, Vector3Int offset, ref List<int> collapsed)
         {
-            Vector3Int cellIndex = new Vector3Int(-1, 0, 0);
-            bool found = false;
+            List<Vector3Int> candidates = new List<Vector3Int>();
             
             Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 cellPosition, Vector3 _) =>
             {
@@ -223,16 +234,17 @@ namespace ModelSynthesis
                 if (current.cellStates.Count < 1)
                     return;
                 
-                if (current.collapsed || found) 
+                if (current.collapsed) 
                     return;
-
-                cellIndex = cellArrayIndex;
-                found = true;
+                
+                candidates.Add(cellArrayIndex);
             }, bounds, gridResolution);
             
             //Failed to find an un-collapsed cell
-            if (!found)
+            if (candidates.Count == 0)
                 return true;
+
+            Vector3Int cellIndex = candidates[Random.Range(0, candidates.Count)];
             
             Cell currentCell = _cells[cellIndex.x, cellIndex.y, cellIndex.z];
             if(currentCell.ForceCollapse(new List<int>(collapsed)))

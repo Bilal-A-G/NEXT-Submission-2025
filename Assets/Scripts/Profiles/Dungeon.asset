@@ -14,33 +14,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - {fileID: 5354603738110452084, guid: 9c568744388dcea48ab52c7105e8e238, type: 3}
-  - {fileID: 5354603738110452084, guid: d9c9c19bc6dcff34188f2bab06ee4be3, type: 3}
-  - {fileID: 4098288093382696694, guid: d11f45fa6d5c8644e93b99f9e8e63cf1, type: 3}
-  - {fileID: 7970896726277208275, guid: 99cfd9a98205d6e45a8694f99ac17af8, type: 3}
-  - {fileID: 448618358591639048, guid: 2b5a5520f5bf08145848003e6f91b712, type: 3}
-  - {fileID: 2337012815417341273, guid: f8e8a3f664cfaa24288b8465512579b6, type: 3}
-  - {fileID: 3042607598963298978, guid: d2d4ea4d6d813ee48a70d266b5cde9f4, type: 3}
+  - {fileID: 4682727691153303730, guid: 7532413f829776642b874ca6c90e8925, type: 3}
+  - {fileID: 3158891951643545863, guid: d9ca71543e2905544a0ce8cb97c7735b, type: 3}
+  - {fileID: 1627339980047449018, guid: eb4aa258335260c48bd274c446461da9, type: 3}
+  - {fileID: 4519281765398956585, guid: 23b23938a9b882c42b7411ed8f53ca3f, type: 3}
   allStates:
   - prefabIndex: 0
     rotation: {x: 0, y: 0, z: 0}
     adjacencyConstraint:
       up: 
       down: 
-      left: 00000000070000000800000009000000
+      left: 00000000090000000a0000000b000000
       right: 00000000010000000200000003000000
-      forwards: 00000000010000000400000007000000
+      forwards: 0000000001000000040000000a000000
       backwards: 00000000030000000600000009000000
-  - prefabIndex: 5
-    rotation: {x: -0, y: 179.99966, z: -0}
+  - prefabIndex: 3
+    rotation: {x: -0, y: 0, z: -0}
     adjacencyConstraint:
       up: 
       down: 
       left: 00000000
-      right: 04000000
-      forwards: 02000000
+      right: 0400000007000000
+      forwards: 0200000007000000
       backwards: 00000000
-  - prefabIndex: 2
-    rotation: {x: -0, y: 179.99966, z: 0}
+  - prefabIndex: 4
+    rotation: {x: -0, y: -0, z: 0}
     adjacencyConstraint:
       up: 
       down: 
@@ -48,8 +46,8 @@ MonoBehaviour:
       right: 05000000
       forwards: 0200000003000000
       backwards: 0100000002000000
-  - prefabIndex: 5
-    rotation: {x: -0, y: 270, z: 0}
+  - prefabIndex: 3
+    rotation: {x: -0, y: 90, z: -0}
     adjacencyConstraint:
       up: 
       down: 
@@ -57,26 +55,26 @@ MonoBehaviour:
       right: 06000000
       forwards: 00000000
       backwards: 02000000
-  - prefabIndex: 3
-    rotation: {x: -0, y: 89.999664, z: 0}
+  - prefabIndex: 4
+    rotation: {x: -0, y: 270, z: 0}
     adjacencyConstraint:
       up: 
       down: 
       left: 0100000004000000
-      right: 0400000007000000
+      right: 07000000040000000a000000
       forwards: 05000000
       backwards: 00000000
   - prefabIndex: 1
-    rotation: {x: -0, y: 0, z: 0}
+    rotation: {x: -0, y: -0, z: -0}
     adjacencyConstraint:
       up: 
       down: 
-      left: 0200000005000000
-      right: 0500000008000000
-      forwards: 0500000006000000
-      backwards: 0400000005000000
-  - prefabIndex: 3
-    rotation: {x: -0, y: 269.99933, z: 0}
+      left: 020000000500000007000000
+      right: 05000000080000000b000000
+      forwards: 050000000600000008000000
+      backwards: 040000000500000007000000
+  - prefabIndex: 4
+    rotation: {x: -0, y: 90, z: -0}
     adjacencyConstraint:
       up: 
       down: 
@@ -84,42 +82,60 @@ MonoBehaviour:
       right: 0600000009000000
       forwards: 00000000
       backwards: 05000000
-  - prefabIndex: 4
-    rotation: {x: -0, y: 89.999825, z: -0}
+  - prefabIndex: 2
+    rotation: {x: -0, y: 90, z: -0}
+    adjacencyConstraint:
+      up: 
+      down: 
+      left: 0400000001000000
+      right: 05000000
+      forwards: 05000000
+      backwards: 01000000
+  - prefabIndex: 2
+    rotation: {x: -0, y: 270, z: 0}
+    adjacencyConstraint:
+      up: 
+      down: 
+      left: 05000000
+      right: 09000000
+      forwards: 09000000
+      backwards: 05000000
+  - prefabIndex: 3
+    rotation: {x: -0, y: 180, z: -0}
+    adjacencyConstraint:
+      up: 
+      down: 
+      left: 0600000008000000
+      right: 00000000
+      forwards: 00000000
+      backwards: 080000000b000000
+  - prefabIndex: 3
+    rotation: {x: -0, y: 270, z: 0}
     adjacencyConstraint:
       up: 
       down: 
       left: 04000000
       right: 00000000
-      forwards: 08000000
+      forwards: 0b000000
       backwards: 00000000
-  - prefabIndex: 6
-    rotation: {x: 0, y: -0.00027662262, z: 0}
+  - prefabIndex: 4
+    rotation: {x: -0, y: 180, z: -0}
     adjacencyConstraint:
       up: 
       down: 
       left: 05000000
       right: 00000000
-      forwards: 0800000009000000
-      backwards: 0700000008000000
-  - prefabIndex: 4
-    rotation: {x: -0, y: 0, z: 0}
-    adjacencyConstraint:
-      up: 
-      down: 
-      left: 06000000
-      right: 00000000
-      forwards: 00000000
-      backwards: 08000000
+      forwards: 0b00000009000000
+      backwards: 0a0000000b000000
   nullPrefabIndex: 0
   chunks:
   - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
-  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
-  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
-  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
-  - cells: 010000000200000002000000040000000500000005000000040000000500000005000000
-  - cells: 070000000800000008000000000000000000000000000000000000000000000000000000
-  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
-  - cells: 030000000000000000000000060000000000000000000000060000000000000000000000
+  - cells: 000000000000000001000000000000000100000007000000000000000400000005000000
+  - cells: 000000000400000005000000000000000a0000000b000000000000000000000000000000
+  - cells: 000000000000000000000000010000000200000002000000040000000500000005000000
+  - cells: 070000000500000005000000050000000500000005000000050000000500000005000000
+  - cells: 0500000005000000080000000b0000000b00000009000000000000000000000000000000
+  - cells: 000000000000000000000000030000000000000000000000060000000000000000000000
+  - cells: 060000000000000000000000060000000000000000000000060000000000000000000000
   - cells: 090000000000000000000000000000000000000000000000000000000000000000000000
-  perceptualDistanceThreshold: 1
+  perceptualDistanceThreshold: 0

@@ -56,7 +56,10 @@ namespace ModelSynthesis
                 prefab = prefab.transform.parent == null ? prefab : prefab.transform.parent.gameObject;
                 
                 Debug.Log("Detected : " + prefab.name);
-                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = (prefab, collided.rotation.eulerAngles);
+                Vector3 eulerAngles = collided.eulerAngles;
+                _cells[arrayIndex.x, arrayIndex.y, arrayIndex.z] = (prefab, 
+                    new Vector3(Mathf.Round(eulerAngles.x), Mathf.Round(eulerAngles.y), Mathf.Round(eulerAngles.z)));
+                
             }, bounds, cellScale, sampleOffset);
 
             Utility.LoopOverAllCells((Vector3Int arrayIndex, Vector3 _, Vector3 _) =>

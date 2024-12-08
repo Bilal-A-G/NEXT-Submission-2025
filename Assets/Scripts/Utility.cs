@@ -70,10 +70,10 @@ public class Utility : MonoBehaviour
                (index.z > bounds.GetDepth() - 1 || index.z < 0);
     }
 
-    public static bool IsIndexAtBounds(Vector3Int index, Bounds bounds)
+    public static bool IsIndexAtBounds(Vector3Int index, Bounds bounds, bool ignoreY)
     {
         return (index.x == bounds.GetWidth() - 1 || index.x == 0) ||
-               (index.y == bounds.GetHeight() - 1 || index.y == 0) ||
+               (!ignoreY && (index.y == bounds.GetHeight() - 1 || index.y == 0)) ||
                (index.z == bounds.GetDepth() - 1 || index.z == 0);
     }
     
