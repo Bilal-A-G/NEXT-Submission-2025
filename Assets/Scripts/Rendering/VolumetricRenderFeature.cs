@@ -37,9 +37,10 @@ namespace Rendering
                 allBounds[i] = new VolumeBounds(currentTransform.position, currentTransform.localScale);
             }
             
-            _material = new Material(shader);
-
-            _renderPass = new VolumetricRenderPass(allBounds, _material);
+            if(allBounds.Length == 0)
+                return;
+            
+            _renderPass = new VolumetricRenderPass(allBounds, shader);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
