@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -6,32 +7,25 @@ using UnityEngine.Rendering.Universal;
 
 namespace Rendering
 {
-    public class PassData
-    {
-        public TextureHandle outputHandle;
-        public TextureHandle inputHandle;
-        
-        public ComputeShader shader;
-
-        public int outputTextureProperty;
-        public int inputTextureProperty;
-
-        public int screenWidth;
-        public int screenHeight;
-    }
-    
     public class VolumetricRenderPass : ScriptableRenderPass
     {
-        private ComputeShader _shader;
         private RenderTextureDescriptor _textureDescriptor;
+        private GraphicsBuffer _allBounds;
+
+        private Material _material;
         
-        public VolumetricRenderPass(ComputeShader shader)
+        public VolumetricRenderPass(VolumeBounds[] allBounds, Material material)
         {
-            _shader = shader;
+            _material = material;
+            
             _textureDescriptor = new RenderTextureDescriptor(Screen.width, 
                 Screen.height, RenderTextureFormat.Default, 0);
 
             _textureDescriptor.enableRandomWrite = true;
+
+            _allBounds =
+                new GraphicsBuffer(GraphicsBuffer.Target.Structured ,allBounds.Length, Marshal.SizeOf<VolumeBounds>());
+            _allBounds.SetData(allBounds);
         }
         
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -46,46 +40,20 @@ namespace Rendering
             _textureDescriptor.width = cameraData.cameraTargetDescriptor.width;
             _textureDescriptor.height = cameraData.cameraTargetDescriptor.height;
             
+            
             TextureHandle outputHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, _textureDescriptor, 
                  "output", false);
-            TextureHandle inputHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, _textureDescriptor,
-                "input", false);
             
-            if(!currentScreenHandle.IsValid() || !outputHandle.IsValid() || !inputHandle.IsValid())
+            if(!currentScreenHandle.IsValid() || !outputHandle.IsValid())
                 return;
             
-            renderGraph.AddBlitPass(currentScreenHandle, inputHandle, Vector2.one, Vector2.zero);
+            _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
 
-            using (IComputeRenderGraphBuilder builder = renderGraph.AddComputePass<PassData>("Compute Volumetric Clouds", 
-                       out PassData passData))
-            {
-                passData.outputHandle = outputHandle;
-                passData.inputHandle = inputHandle;
-                passData.screenWidth = cameraData.cameraTargetDescriptor.width;
-                passData.screenHeight = cameraData.cameraTargetDescriptor.height;
-
-                passData.outputTextureProperty = Shader.PropertyToID("output");
-                passData.inputTextureProperty = Shader.PropertyToID("input");
-                
-                passData.shader = _shader;
-                
-                builder.AllowPassCulling(true);
-                builder.UseTexture(passData.outputHandle, AccessFlags.Write);
-                builder.UseTexture(passData.inputHandle, AccessFlags.Read);
-                
-                builder.SetRenderFunc((PassData data, ComputeGraphContext context) => ExecutePass(data, context));
-            }
+            RenderGraphUtils.BlitMaterialParameters passParams =
+                new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, outputHandle, _material, 0);
+            renderGraph.AddBlitPass(passParams);
                 
             renderGraph.AddBlitPass(outputHandle, currentScreenHandle, Vector2.one, Vector2.zero);
-        }
-
-        private void ExecutePass(PassData data, ComputeGraphContext context)
-        {
-            context.cmd.SetComputeTextureParam(data.shader, 0, data.outputTextureProperty, data.outputHandle);
-            context.cmd.SetComputeTextureParam(data.shader, 0, data.inputTextureProperty, data.inputHandle);
-
-            context.cmd.DispatchCompute(data.shader, 0, 
-                data.screenWidth, data.screenHeight, 1);
         }
     }
 }

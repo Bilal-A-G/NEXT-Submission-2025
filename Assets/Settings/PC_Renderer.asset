@@ -66,7 +66,7 @@ MonoBehaviour:
   m_Name: VolumetricRenderer
   m_EditorClassIdentifier: 
   m_Active: 1
-  volumetricShader: {fileID: 7200000, guid: 05052ac926a3f424aada11c079e24a58, type: 3}
+  shader: {fileID: 4800000, guid: 76953a1d1c8f08040921f0cdb71df1ca, type: 3}
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0
