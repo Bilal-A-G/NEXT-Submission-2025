@@ -1,0 +1,39 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> output;
+StructuredBuffer<float3> points;
+
+int tilesX;
+int tilesY;
+int tileSize;
+
+[numthreads(1, 1, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float closestDist = 1000000;
+
+    int tileIndexX = id.x / tileSize;
+    int tileIndexY = id.y / tileSize;
+    
+    for (int i = -1; i <= 1; i++)
+    {
+        uint xIndex = (uint)(tileIndexX + i + tilesX) % tilesX;
+        float xOffset = ((float)(tileIndexX + i)/(float)tilesX - (float)xIndex/(float)tilesX);
+
+        for (int j = -1; j <= 1; j++)
+        {
+            uint yIndex = (uint)(tileIndexY + j + tilesY) % tilesY;
+            float yOffset = ((float)(tileIndexY + i)/(float)tilesY - (float)yIndex/(float)tilesY);
+
+            int flattenedIndex = xIndex * tilesX + yIndex;
+
+            float3 currentPoint = points[flattenedIndex] + float3(xOffset, yOffset, 0);
+
+            float dist = pow((id.x - currentPoint.x), 2) + pow((id.y - currentPoint.y), 2);
+            if(closestDist > dist)
+                closestDist = dist;
+        }
+    }
+
+    output[id.xy] = float4(closestDist, 0, 0, 0);
+}
