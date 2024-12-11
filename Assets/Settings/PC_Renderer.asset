@@ -66,7 +66,10 @@ MonoBehaviour:
   m_Name: VolumetricRenderer
   m_EditorClassIdentifier: 
   m_Active: 1
-  shader: {fileID: 4800000, guid: 76953a1d1c8f08040921f0cdb71df1ca, type: 3}
+  volumetricShader: {fileID: 4800000, guid: 76953a1d1c8f08040921f0cdb71df1ca, type: 3}
+  noiseShader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+  shapingNoiseSize: 128
+  shapingNoiseTileSize: 4
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

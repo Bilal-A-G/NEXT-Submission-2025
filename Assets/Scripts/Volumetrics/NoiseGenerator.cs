@@ -7,14 +7,12 @@ using Random = UnityEngine.Random;
 
 namespace Volumetrics
 {
-    public class NoiseGenerator : MonoBehaviour
+    public static class NoiseGenerator
     {
-        [SerializeField] private ComputeShader noiseShader;
-        
-        private RenderTexture _computeNoise;
-        private ComputeBuffer _pointsBuffer;
+        private static RenderTexture _computeNoise;
+        private static ComputeBuffer _pointsBuffer;
 
-        private async Task<float[][]> ReadBackGPU(int textureHeight, int textureWidth, int textureDepth)
+        private static async Task<float[][]> ReadBackGPU(int textureHeight, int textureWidth, int textureDepth)
         {
             AsyncGPUReadbackRequest req = await AsyncGPUReadback.RequestAsync(_computeNoise, 0, 
                 0, textureWidth, 0, textureHeight, 0, textureDepth, TextureFormat.RFloat);
@@ -27,14 +25,21 @@ namespace Volumetrics
             
             return data;
         }
-        
-        public Task<float[][]> GenerateNoise(int textureHeight, int textureWidth, int textureDepth, int tileSize)
+
+        private static void DispatchCompute(int textureHeight, int textureWidth, 
+            int textureDepth, int tileSize, ComputeShader noiseShader)
         {
+            if(_computeNoise != null)
+                Object.Destroy(_computeNoise);
+            
+            if(_pointsBuffer != null)
+                _pointsBuffer.Dispose();
+
             if (textureHeight % tileSize != 0 || textureWidth % tileSize != 0 || textureDepth % tileSize != 0)
             {
                 Debug.LogError("Error, can't evenly divide texture into tiles of size " + tileSize + 
                                " pick a number that is divisible by the texture dimensions!");
-                return null;
+                return;
             }
             
             _computeNoise = new RenderTexture(textureWidth, textureHeight, 0, GraphicsFormat.R32_SFloat);
@@ -76,14 +81,20 @@ namespace Volumetrics
             noiseShader.SetInt(Shader.PropertyToID("tileSize"), tileSize);
             
             noiseShader.Dispatch(0, textureWidth, textureHeight, textureDepth);
-
-            return ReadBackGPU(textureHeight, textureWidth, textureDepth);
         }
 
-        private void OnDisable()
+        public static RenderTexture GenerateNoiseNoReadBack(int textureHeight, int textureWidth, int textureDepth,
+            int tileSize, ComputeShader noiseShader)
         {
-            Destroy(_computeNoise);
-            _pointsBuffer.Dispose();
+            DispatchCompute(textureHeight, textureWidth, textureDepth, tileSize, noiseShader);
+            return _computeNoise;
+        }
+        
+        public static Task<float[][]> GenerateNoise(int textureHeight, int textureWidth, 
+            int textureDepth, int tileSize, ComputeShader noiseShader)
+        {
+            DispatchCompute(textureHeight, textureWidth, textureDepth, tileSize, noiseShader);
+            return ReadBackGPU(textureHeight, textureWidth, textureDepth);
         }
     }
 }

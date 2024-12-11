@@ -11,10 +11,11 @@ namespace Rendering
     {
         private RenderTextureDescriptor _textureDescriptor;
         private ComputeBuffer _allBounds;
+        private RenderTexture _noise;
 
         private Material _material;
         
-        public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader)
+        public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, RenderTexture noise)
         {
             _material = new Material(shader);
             
@@ -26,6 +27,8 @@ namespace Rendering
             _allBounds =
                 new ComputeBuffer(allBounds.Length, Marshal.SizeOf<VolumeBounds>());
             _allBounds.SetData(allBounds);
+
+            _noise = noise;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -47,6 +50,7 @@ namespace Rendering
                 return;
 
             _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
+            _material.SetTexture(Shader.PropertyToID("noise"), _noise);
 
             RenderGraphUtils.BlitMaterialParameters passParams =
                 new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, outputHandle, _material, 0);

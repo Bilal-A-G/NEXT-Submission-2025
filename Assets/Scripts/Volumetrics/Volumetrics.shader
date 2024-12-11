@@ -31,6 +31,14 @@ Shader "CustomEffects/Volumetrics"
     
     StructuredBuffer<Bounds> volumeBounds;
     Texture2D<float4> _CameraDepthTexture;
+    Texture3D<float> noise;
+    
+    float SampleDensity(float3 position)
+    {
+        float noiseSample = SAMPLE_TEXTURE3D(noise, sampler_TrilinearRepeat, position.xyz * 0.01f);
+        float density = max(0, 6.0f - noiseSample) * 1.2f;
+        return density;
+    }
 
     float4 ComputeVolumetrics(Varyings input) : SV_Target
     {
@@ -45,20 +53,30 @@ Shader "CustomEffects/Volumetrics"
 
         float nonLinearDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,sampler_LinearClamp, input.texcoord.xy);
         float depth = LinearEyeDepth(nonLinearDepth, _ZBufferParams);
-        
+
+        float totalDensity = 0;
+
         for (int i = 0; i < numVolumes; i++)
         {
             float3 boundsMin = volumeBounds[i].origin - volumeBounds[i].extents/2.0f;
             float3 boundsMax = volumeBounds[i].origin + volumeBounds[i].extents/2.0f;
             
             float2 intersectData = RayBoxIntersect(boundsMin, boundsMax, camPos, viewVector);
-            if(intersectData.y > 0 && depth > intersectData.x)
+
+            float distanceTravelled = 0;
+            float distanceLimit = min(depth - intersectData.x, intersectData.y);
+            float stepSize = 0.01f;
+
+            [unroll(100)]
+            while (distanceTravelled < distanceLimit)
             {
-                return float4(0, 0, 0, 1);
+                float3 rayPosition = camPos + viewVector * (distanceTravelled + intersectData.x);
+                totalDensity += SampleDensity(rayPosition) * stepSize;
+                distanceTravelled += stepSize;
             }
         }
-        
-        return float4(SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord).rgb, 1.0f);
+        float transmittance = exp(-totalDensity);
+        return float4(SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord).rgb, 1.0f) * transmittance;
     }
     
     ENDHLSL
