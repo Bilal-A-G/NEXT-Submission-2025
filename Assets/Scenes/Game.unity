@@ -471,10 +471,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   noiseShader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
-  textureHeight: 500
-  textureWidth: 500
-  tileSize: 100
-  _displayNoise: {fileID: 0}
+  displaySlice: 20
+  displayNoise: {fileID: 0}
 --- !u!1 &1039814685
 GameObject:
   m_ObjectHideFlags: 0
