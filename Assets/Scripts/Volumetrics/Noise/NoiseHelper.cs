@@ -97,6 +97,10 @@ namespace Volumetrics.Noise
             shader.SetVector(Shader.PropertyToID("channel"), channel);
             shader.SetFloat(Shader.PropertyToID("contribution"), contribution);
             
+            shader.SetFloat(Shader.PropertyToID("seed"), Random.Range(0.0f, 2.0f));
+            shader.SetFloats(Shader.PropertyToID("imageDimensions"), new float[]{(float)textureDimensions.x, 
+                (float)textureDimensions.y, (float)textureDimensions.z});
+            
             shader.Dispatch(0, textureDimensions.x, textureDimensions.y, textureDimensions.z);
         } 
         

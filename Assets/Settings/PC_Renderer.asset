@@ -71,29 +71,35 @@ MonoBehaviour:
   - textureDimensions: {x: 128, y: 128, z: 128}
     channelNoises:
     - scale: 32
-      octaves: 2
+      octaves: 5
+      channel: {x: 1, y: 0, z: 0, w: 0}
+      type: 1
+      shader: {fileID: 7200000, guid: a795697b6fedd0a419dbe79fd16ee124, type: 3}
+      contribution: 0.751
+    - scale: 32
+      octaves: 1
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     - scale: 16
       octaves: 3
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     - scale: 8
       octaves: 2
       channel: {x: 0, y: 0, z: 1, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     - scale: 4
       octaves: 2
       channel: {x: 0, y: 0, z: 0, w: 1}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     textureOutput: {fileID: 0}
   - textureDimensions: {x: 32, y: 32, z: 32}
     channelNoises:
@@ -101,20 +107,20 @@ MonoBehaviour:
       octaves: 1
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     - scale: 4
       octaves: 1
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     - scale: 2
       octaves: 1
       channel: {x: 0, y: 0, z: 1, w: 0}
       type: 0
-      shader: {fileID: 0}
-      contribution: 0
+      shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
+      contribution: 1
     textureOutput: {fileID: 0}
 --- !u!114 &7833122117494664109
 MonoBehaviour:

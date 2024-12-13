@@ -426,7 +426,13 @@ MonoBehaviour:
   - textureDimensions: {x: 128, y: 128, z: 128}
     channelNoises:
     - scale: 32
-      octaves: 2
+      octaves: 5
+      channel: {x: 1, y: 0, z: 0, w: 0}
+      type: 1
+      shader: {fileID: 7200000, guid: a795697b6fedd0a419dbe79fd16ee124, type: 3}
+      contribution: 0.751
+    - scale: 32
+      octaves: 1
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
@@ -471,8 +477,10 @@ MonoBehaviour:
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
     textureOutput: {fileID: 0}
-  brightness: 2
-  invDensity: 0.4
+  brightness: 0.5
+  invDensity: 0.076
+  myTex: {fileID: 0}
+  testMat: {fileID: 2100000, guid: e761cf807462c0e469af30632bfe1b93, type: 2}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,14 +2,10 @@
 #pragma target 3.0
 
 /*
- Perlin noise implementation from: https://discussions.unity.com/t/2d-3d-4d-optimised-perlin-noise-cg-hlsl-library-cginc/523441
+ Perlin noise implementation from: https://github.com/ashima/webgl-noise
 
-Ported by:
-	Lex-DRL
-Original GLSL functions:
-	https://github.com/ashima/webgl-noise
-
-                 Credits from source glsl file:
+ Ported to HLSL by me
+ Includes small tweaks made by me as well, such as seeded randomness
 
  Description : Array and textureless GLSL 2D/3D/4D simplex 
                noise functions.
@@ -70,11 +66,18 @@ float3 fade(float3 t) {
   return t*t*t*(t*(t*6.0-15.0)+10.0);
 }
 
-// Classic Perlin noise, periodic variant
-float pnoise(float3 P, float3 rep)
+float hash(float input)
 {
-  float3 Pi0 = floor(P) % rep; // Integer part, modulo period
-  float3 Pi1 = (Pi0 + float3(1.0, 1.0, 1.0)) % rep; // Integer part + 1, mod period
+  return frac(sin(input) * 3532.12312);
+}
+
+// Classic Perlin noise, periodic variant
+float pnoise(float3 P, float3 rep, float seed)
+{
+  P += float3(hash(seed), hash(seed + 1), hash(seed + 2));
+  
+  float3 Pi0 = fmod(floor(P), rep); // Integer part, modulo period
+  float3 Pi1 = fmod(Pi0 + float3(1.0, 1.0, 1.0), rep); // Integer part + 1, mod period
   Pi0 = mod289(Pi0);
   Pi1 = mod289(Pi1);
   float3 Pf0 = frac(P); // fracional part for interpolation
@@ -140,9 +143,15 @@ float scale;
 float contribution;
 float4 channel;
 
+float seed;
+float3 imageDimensions;
+
 [numthreads(1,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float noise = pnoise(float3((float)id.x, (float)id.y, (float)id.z) / scale, float3(32, 32, 32)) / contribution;
-    output[id.xyz] -= channel * noise;
+    float noise = pnoise(float3((float)id.x, (float)id.y, (float)id.z)/scale,
+      imageDimensions/scale, seed) * contribution;
+
+    //Scaling to make the perceptual brightness line up with Worley noise better
+    output[id.xyz] += channel * (noise * 0.25f);
 }
