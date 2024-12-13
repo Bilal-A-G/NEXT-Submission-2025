@@ -4,11 +4,13 @@
 RWTexture3D<float4> output;
 StructuredBuffer<float3> points;
 
-int tilesX;
-int tilesY;
-int tilesZ;
-
+int3 tiles;
 int tileSize;
+
+float4 channel;
+float contribution;
+
+int3 imageDimensions;
 
 [numthreads(1, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -21,29 +23,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     for (int i = -1; i <= 1; i++)
     {
-        uint xIndex = (uint)(tileIndexX + i + tilesX) % tilesX;
-        float xOffset = ((float)(tileIndexX + i)/(float)tilesX - (float)xIndex/(float)tilesX) * tilesX;
+        uint xIndex = (uint)(tileIndexX + i + tiles.x) % tiles.x;
+        float xOffset = ((float)(tileIndexX + i)/(float)tiles.x - (float)xIndex/(float)tiles.x) * tiles.x;
 
         for (int j = -1; j <= 1; j++)
         {
-            uint yIndex = (uint)(tileIndexY + j + tilesY) % tilesY;
-            float yOffset = ((float)(tileIndexY + j)/(float)tilesY - (float)yIndex/(float)tilesY) * tilesY;
+            uint yIndex = (uint)(tileIndexY + j + tiles.y) % tiles.y;
+            float yOffset = ((float)(tileIndexY + j)/(float)tiles.y - (float)yIndex/(float)tiles.y) * tiles.y;
 
             for (int k = -1; k <= 1; k++)
             {
-                uint zIndex = (uint)(tileIndexZ + k + tilesZ) % tilesZ;
-                float zOffset = ((float)(tileIndexZ + k)/(float)tilesZ - (float)zIndex/(float)tilesZ) * tilesZ;
+                uint zIndex = (uint)(tileIndexZ + k + tiles.z) % tiles.z;
+                float zOffset = ((float)(tileIndexZ + k)/(float)tiles.z - (float)zIndex/(float)tiles.z) * tiles.z;
                 
-                int flattenedIndex = zIndex * tilesX * tilesY + yIndex * tilesX + xIndex;
+                int flattenedIndex = zIndex * tiles.x * tiles.y + yIndex * tiles.x + xIndex;
 
                 float3 currentPoint = points[flattenedIndex] + float3(xOffset, yOffset, zOffset) * tileSize;
 
                 float dist = pow(id.x - currentPoint.x, 2) + pow(id.y - currentPoint.y, 2) + pow(id.z - currentPoint.z, 2);
                 if(closestDist > dist)
-                    closestDist = dist;   
+                    closestDist = dist;
             }
         }
     }
 
-    output[id.xyz] = float4(closestDist, 0, 0, 0);
+    //Makes it so distance is now a number between 0-16, I'm choosing 0-16, because if it was 0-1 there would be really small numbers
+    //which may cause rounding issues
+    float greatestDistance = pow(imageDimensions.x/16 - 1, 2) + pow(imageDimensions.y/16 - 1, 2) + pow(imageDimensions.z/16 - 1, 2);
+    
+    output[id.xyz] += channel * contribution * (closestDist/greatestDistance);
 }

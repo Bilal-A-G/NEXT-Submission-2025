@@ -34,9 +34,9 @@ Shader "CustomEffects/Volumetrics"
     Texture3D<float> noise;
     
     float SampleDensity(float3 position)
-    {
-        float noiseSample = SAMPLE_TEXTURE3D(noise, sampler_TrilinearRepeat, position.xyz * 0.01f);
-        float density = max(0, 6.0f - noiseSample) * 1.2f;
+    {   
+        float noiseSample = SAMPLE_TEXTURE3D(noise, sampler_TrilinearRepeat, position.xyz * 0.1f);
+        float density = 1 - noiseSample/500;
         return density;
     }
 
@@ -75,8 +75,8 @@ Shader "CustomEffects/Volumetrics"
                 distanceTravelled += stepSize;
             }
         }
-        float transmittance = exp(-totalDensity);
-        return float4(SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord).rgb, 1.0f) * transmittance;
+
+        return float4(SAMPLE_TEXTURE3D(noise, sampler_LinearClamp, (float3(input.texcoord.xy, 1.0f) * 1.0f))/100, 0, 0, 1);
     }
     
     ENDHLSL

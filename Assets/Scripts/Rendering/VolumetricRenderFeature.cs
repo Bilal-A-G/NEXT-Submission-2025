@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Serialization;
 using Volumetrics;
+using Volumetrics.Noise;
 
 namespace Rendering
 {
@@ -21,21 +23,18 @@ namespace Rendering
     public class VolumetricRenderFeature : ScriptableRendererFeature
     {
         [SerializeField] private Shader volumetricShader;
-        [SerializeField] private ComputeShader noiseShader;
-
-        [SerializeField] private int shapingNoiseSize;
-        [SerializeField] private int shapingNoiseTileSize;
+        [SerializeField] private NoiseTextureData[] noiseTextureConfigs;
 
         private VolumetricRenderPass _renderPass;
         private Material _material;
         
         public override void Create()
         {
+            return;
             if(volumetricShader == null)
                 return;
 
-            RenderTexture worleyNoise = NoiseGenerator.GenerateNoiseNoReadBack(shapingNoiseSize, shapingNoiseSize,
-                shapingNoiseSize, shapingNoiseTileSize, noiseShader);
+            NoiseGenerator.GenerateNoise(ref noiseTextureConfigs);
             
             VolumeDefinition[] allVolumes = FindObjectsByType<VolumeDefinition>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             VolumeBounds[] allBounds = new VolumeBounds[allVolumes.Length];
@@ -48,7 +47,7 @@ namespace Rendering
             if(allBounds.Length == 0)
                 return;
             
-            _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, worleyNoise);
+            _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, noiseTextureConfigs[0].textureOutput);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
