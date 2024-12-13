@@ -421,9 +421,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd488a910f377c24980c1abf77fb61ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  brightnesses:
-  - 0.1
-  - 0.1
   textures: []
   noiseTextureConfigs:
   - textureDimensions: {x: 128, y: 128, z: 128}
@@ -474,6 +471,8 @@ MonoBehaviour:
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
     textureOutput: {fileID: 0}
+  brightness: 2
+  invDensity: 0.4
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

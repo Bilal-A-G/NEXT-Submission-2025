@@ -64,9 +64,9 @@ namespace Volumetrics.Noise
 
                         Vector3 center = new Vector3(i + 0.5f, j + 0.5f, k + 0.5f) * scale;
                         points[flattenedIndex] = center + new Vector3(
-                            Random.Range(-scale / 2, scale / 2),
-                            Random.Range(-scale / 2, scale / 2), 
-                            Random.Range(-scale / 2, scale / 2));   
+                            Random.Range(-scale / 2.0f, scale / 2.0f),
+                            Random.Range(-scale / 2.0f, scale / 2.0f), 
+                            Random.Range(-scale / 2.0f, scale / 2.0f));   
                     }
                 }
             }

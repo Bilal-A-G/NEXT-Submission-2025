@@ -75,21 +75,25 @@ MonoBehaviour:
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     - scale: 16
       octaves: 3
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     - scale: 8
       octaves: 2
       channel: {x: 0, y: 0, z: 1, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     - scale: 4
       octaves: 2
       channel: {x: 0, y: 0, z: 0, w: 1}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     textureOutput: {fileID: 0}
   - textureDimensions: {x: 32, y: 32, z: 32}
     channelNoises:
@@ -98,16 +102,19 @@ MonoBehaviour:
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     - scale: 4
       octaves: 1
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     - scale: 2
       octaves: 1
       channel: {x: 0, y: 0, z: 1, w: 0}
       type: 0
       shader: {fileID: 0}
+      contribution: 0
     textureOutput: {fileID: 0}
 --- !u!114 &7833122117494664109
 MonoBehaviour:

@@ -15,7 +15,7 @@ int3 imageDimensions;
 [numthreads(1, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float closestDist = 10000000;
+    float closestDist = 1000000000.0f;
 
     int tileIndexX = id.x / tileSize;
     int tileIndexY = id.y / tileSize;
@@ -47,9 +47,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         }
     }
 
-    //Makes it so distance is now a number between 0-16, I'm choosing 0-16, because if it was 0-1 there would be really small numbers
-    //which may cause rounding issues
-    float greatestDistance = pow(imageDimensions.x/16 - 1, 2) + pow(imageDimensions.y/16 - 1, 2) + pow(imageDimensions.z/16 - 1, 2);
+    //Theoretical max, in practice this is extremely rare
+    float greatestDistance = (tileSize * tileSize) * 3.0f;
     
-    output[id.xyz] += channel * contribution * (closestDist/greatestDistance);
+    output[id.xyz] += channel * (contribution * 0.5 - contribution * closestDist/greatestDistance);
 }

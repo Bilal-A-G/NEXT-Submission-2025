@@ -34,7 +34,7 @@ namespace Volumetrics
              
                 for (int v = 0; v < channelData.octaves; v++)
                 {
-                    float contribution = Mathf.Pow(2, v) * channelData.contribution;
+                    float contribution = Mathf.Pow(2, -v) * channelData.contribution;
                     int scale = (int)(channelData.scale / Mathf.Pow(2, v));
                     
                     if (scale < 1)
