@@ -11,12 +11,29 @@ namespace Rendering
     {
         private RenderTextureDescriptor _textureDescriptor;
         private ComputeBuffer _allBounds;
-        private RenderTexture _noise;
+        
+        private RenderTexture _shapeNoise;
+        private RenderTexture _detailNoise;
 
         private Material _material;
+
+        private float _density;
+        private float _threshold;
+        private float _scale;
         
-        public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, RenderTexture noise)
+        private float _rScale;
+        private float _gScale;
+        private float _bScale;
+        private float _aScale;
+
+        
+        public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, 
+            RenderTexture shapeNoise, RenderTexture detailNoise, ref float density, ref float threshold, ref float scale,
+            ref float rScale, ref float gScale, ref float bScale, ref float aScale)
         {
+            if(!Application.isPlaying)
+                return;
+            
             _material = new Material(shader);
             
             _textureDescriptor = new RenderTextureDescriptor(Screen.width, 
@@ -28,11 +45,24 @@ namespace Rendering
                 new ComputeBuffer(allBounds.Length, Marshal.SizeOf<VolumeBounds>());
             _allBounds.SetData(allBounds);
 
-            _noise = noise;
+            _shapeNoise = shapeNoise;
+            _detailNoise = detailNoise;
+
+            _density = density;
+            _threshold = threshold;
+            _scale = scale;
+
+            _rScale = rScale;
+            _gScale = gScale;
+            _bScale = bScale;
+            _aScale = aScale;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            if(!Application.isPlaying)
+                return;
+            
             UniversalResourceData resources = frameData.Get<UniversalResourceData>();
             TextureHandle currentScreenHandle = resources.activeColorTexture;
         
@@ -50,7 +80,18 @@ namespace Rendering
                 return;
 
             _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
-            _material.SetTexture(Shader.PropertyToID("noise"), _noise);
+            
+            _material.SetTexture(Shader.PropertyToID("shapeNoise"), _shapeNoise);
+            _material.SetTexture(Shader.PropertyToID("detailNoise"), _detailNoise);
+            
+            _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);
+            _material.SetFloat(Shader.PropertyToID("density"), _density);
+            _material.SetFloat(Shader.PropertyToID("scale"), _scale);
+            
+            _material.SetFloat(Shader.PropertyToID("rScale"), _rScale);
+            _material.SetFloat(Shader.PropertyToID("gScale"), _gScale);
+            _material.SetFloat(Shader.PropertyToID("bScale"), _bScale);
+            _material.SetFloat(Shader.PropertyToID("aScale"), _aScale);
 
             RenderGraphUtils.BlitMaterialParameters passParams =
                 new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, outputHandle, _material, 0);
@@ -58,12 +99,6 @@ namespace Rendering
             renderGraph.AddBlitPass(passParams);
                 
             renderGraph.AddBlitPass(outputHandle, currentScreenHandle, Vector2.one, Vector2.zero);
-        }
-
-        ~VolumetricRenderPass()
-        {
-            _allBounds.Dispose();
-            Object.Destroy(_material);
         }
     }
 }

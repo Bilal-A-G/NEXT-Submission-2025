@@ -31,13 +31,31 @@ Shader "CustomEffects/Volumetrics"
     
     StructuredBuffer<Bounds> volumeBounds;
     Texture2D<float4> _CameraDepthTexture;
-    Texture3D<float> noise;
+    
+    Texture3D<float4> shapeNoise;
+    Texture3D<float4> detailNoise;
+
+    float density;
+    float threshold;
+    float scale;
+
+    float rScale;
+    float gScale;
+    float bScale;
+    float aScale;
+
+    float R(float value, float low, float high, float newLow, float newHigh)
+    {
+        return newLow + (value - low) * (newHigh - newLow) / (high - low);
+    }
     
     float SampleDensity(float3 position)
     {   
-        float noiseSample = SAMPLE_TEXTURE3D(noise, sampler_TrilinearRepeat, position.xyz * 0.1f);
-        float density = 1 - noiseSample/500;
-        return density;
+        float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale);
+        float fbm = noiseSample.y * gScale + noiseSample.z * bScale + noiseSample.w * aScale;
+
+        float combinedSample = R(noiseSample.x, fbm - 1,1, 0, 1);
+        return max((threshold - combinedSample) * density, 0);
     }
 
     float4 ComputeVolumetrics(Varyings input) : SV_Target
@@ -67,7 +85,7 @@ Shader "CustomEffects/Volumetrics"
             float distanceLimit = min(depth - intersectData.x, intersectData.y);
             float stepSize = 0.01f;
 
-            [unroll(100)]
+            [unroll(300)]
             while (distanceTravelled < distanceLimit)
             {
                 float3 rayPosition = camPos + viewVector * (distanceTravelled + intersectData.x);
@@ -76,7 +94,8 @@ Shader "CustomEffects/Volumetrics"
             }
         }
 
-        return float4(SAMPLE_TEXTURE3D(noise, sampler_LinearClamp, (float3(input.texcoord.xy, 1.0f) * 1.0f))/100, 0, 0, 1);
+        float transmittance = exp(-totalDensity);
+        return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) * transmittance;
     }
     
     ENDHLSL

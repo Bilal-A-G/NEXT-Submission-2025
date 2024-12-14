@@ -25,13 +25,22 @@ namespace Rendering
         [SerializeField] private Shader volumetricShader;
         [SerializeField] private NoiseTextureData[] noiseTextureConfigs;
 
+        [SerializeField] private float density;
+        [SerializeField] private float threshold;
+        [SerializeField] private float scale;
+        
+        [SerializeField] private float rScale;
+        [SerializeField] private float gScale;
+        [SerializeField] private float bScale;
+        [SerializeField] private float aScale;
+
+
         private VolumetricRenderPass _renderPass;
         private Material _material;
         
         public override void Create()
         {
-            return;
-            if(volumetricShader == null)
+            if(volumetricShader == null || !Application.isPlaying)
                 return;
 
             NoiseGenerator.GenerateNoise(ref noiseTextureConfigs);
@@ -47,7 +56,9 @@ namespace Rendering
             if(allBounds.Length == 0)
                 return;
             
-            _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, noiseTextureConfigs[0].textureOutput);
+            _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, noiseTextureConfigs[0].textureOutput, 
+                noiseTextureConfigs[1].textureOutput, ref density, ref threshold, ref scale, 
+                ref rScale, ref gScale, ref bScale, ref aScale);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
@@ -61,7 +72,7 @@ namespace Rendering
             
             renderer.EnqueuePass(_renderPass);
         }
-
+        
         protected override void Dispose(bool disposing)
         {
             if(_material == null)

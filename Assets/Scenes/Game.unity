@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -155,8 +155,8 @@ Camera:
   m_GameObject: {fileID: 330585543}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.5018867, g: 0.5018867, b: 0.5018867, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -205,13 +205,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.38890216, y: 0.13852304, z: 0.021935267, w: 0.91054124}
-  m_LocalPosition: {x: -0.9, y: 1.5, z: -4.86}
+  m_LocalRotation: {x: 0.14464213, y: -0, z: -0, w: 0.9894841}
+  m_LocalPosition: {x: 0.04, y: 4.36, z: -7.53}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: -45.586, y: 19.638, z: -5.559}
+  m_LocalEulerAnglesHint: {x: 16.633, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,8 +697,8 @@ Transform:
   m_GameObject: {fileID: 1911384411}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: 9.46, z: -0.89}
-  m_LocalScale: {x: 21.28013, y: 6.2834926, z: 21.535696}
+  m_LocalPosition: {x: 0.25, y: 1.23, z: -0.82}
+  m_LocalScale: {x: 8.470523, y: 1.6412002, z: 9.235402}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
