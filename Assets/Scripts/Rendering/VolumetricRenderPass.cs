@@ -26,10 +26,11 @@ namespace Rendering
         private float _bScale;
         private float _aScale;
 
+        private Texture2D _weatherMap;
         
         public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, 
             RenderTexture shapeNoise, RenderTexture detailNoise, ref float density, ref float threshold, ref float scale,
-            ref float rScale, ref float gScale, ref float bScale, ref float aScale)
+            ref float rScale, ref float gScale, ref float bScale, ref float aScale, Texture2D weatherMap)
         {
             if(!Application.isPlaying)
                 return;
@@ -56,6 +57,8 @@ namespace Rendering
             _gScale = gScale;
             _bScale = bScale;
             _aScale = aScale;
+
+            _weatherMap = weatherMap;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -82,6 +85,7 @@ namespace Rendering
             _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
             
             _material.SetTexture(Shader.PropertyToID("shapeNoise"), _shapeNoise);
+            _material.SetTexture(Shader.PropertyToID("weatherMap"), _weatherMap);
             _material.SetTexture(Shader.PropertyToID("detailNoise"), _detailNoise);
             
             _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);

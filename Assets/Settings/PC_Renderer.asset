@@ -75,13 +75,13 @@ MonoBehaviour:
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 1
       shader: {fileID: 7200000, guid: a795697b6fedd0a419dbe79fd16ee124, type: 3}
-      contribution: 0.751
+      contribution: 0.18
     - scale: 32
       octaves: 1
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
-      contribution: 1
+      contribution: 0.763
     - scale: 16
       octaves: 3
       channel: {x: 0, y: 1, z: 0, w: 0}
@@ -122,13 +122,14 @@ MonoBehaviour:
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
     textureOutput: {fileID: 0}
-  density: 20
-  threshold: 0.55
-  scale: 0.14
-  rScale: 1
-  gScale: 0.5
-  bScale: 0.3
-  aScale: 0.1
+  density: 79.76
+  threshold: 0.723
+  scale: 0.09
+  rScale: 0.6
+  gScale: 0.25
+  bScale: 0.15
+  aScale: 0.05
+  weatherMap: {fileID: 2800000, guid: 425e64ee7b959704ca64580d5195ee60, type: 3}
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

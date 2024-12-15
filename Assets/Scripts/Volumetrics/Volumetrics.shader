@@ -31,6 +31,7 @@ Shader "CustomEffects/Volumetrics"
     
     StructuredBuffer<Bounds> volumeBounds;
     Texture2D<float4> _CameraDepthTexture;
+    Texture2D<float4> weatherMap;
     
     Texture3D<float4> shapeNoise;
     Texture3D<float4> detailNoise;
@@ -48,14 +49,46 @@ Shader "CustomEffects/Volumetrics"
     {
         return newLow + (value - low) * (newHigh - newLow) / (high - low);
     }
-    
-    float SampleDensity(float3 position)
-    {   
-        float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale);
-        float fbm = noiseSample.y * gScale + noiseSample.z * bScale + noiseSample.w * aScale;
 
-        float combinedSample = R(noiseSample.x, fbm - 1,1, 0, 1);
-        return max((threshold - combinedSample) * density, 0);
+    float ShapeAlteringHeight(float percentHeight, float maxHeightPercent)
+    {
+        float bottomRounding = clamp(R(percentHeight, 0.0f, 0.07f, 0.0f, 1.0f), 0.0f, 1.0f);
+        float topRounding = clamp(R(percentHeight, maxHeightPercent * 0.2f, 
+                maxHeightPercent, 1, 0), 0.0f, 1.0f);
+
+        return bottomRounding * topRounding;
+    }
+
+    float DensityAlteringHeight(float percentHeight, float localDensity, float globalDensity)
+    {
+        float bottomDensity = percentHeight * clamp(R(percentHeight, 0,
+            0.15f, 0, 1),0.0f, 1.0f);
+        float topDensity = clamp(R(percentHeight, 0.9f, 1, 1, 0), 0.0f, 1.0f);
+
+        return globalDensity * bottomDensity * topDensity * localDensity * 2;
+    }
+    
+    float SampleDensity(float3 position, float3 boundsOrigin, float3 boundsExtents)
+    {
+        float3 localCoordinates = (position.xyz - boundsOrigin)/boundsExtents * 2;
+        localCoordinates = float3(
+            R(localCoordinates.x, -1, 1, 0, 1),
+            R(localCoordinates.y, -1, 1, 0, 1),
+            R(localCoordinates.z, -1, 1, 0, 1));
+        
+        float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale);
+        float4 weatherMapSample = SAMPLE_TEXTURE2D(weatherMap, sampler_LinearRepeat, localCoordinates.xz);
+        
+        float fbm = noiseSample.x * rScale + noiseSample.y * gScale + noiseSample.z * bScale + noiseSample.w * aScale;
+        
+        float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
+        float shapeAltering = ShapeAlteringHeight(localCoordinates.y, weatherMapSample.z);
+        float densityAltering = DensityAlteringHeight(localCoordinates.y, weatherMapSample.w, density);
+        
+        float finalSample = clamp(R(fbm * shapeAltering, 1 - threshold * cloudProbability,
+            1, 0, 1), 0, 1) * densityAltering;
+
+        return finalSample;
     }
 
     float4 ComputeVolumetrics(Varyings input) : SV_Target
@@ -83,13 +116,13 @@ Shader "CustomEffects/Volumetrics"
 
             float distanceTravelled = 0;
             float distanceLimit = min(depth - intersectData.x, intersectData.y);
-            float stepSize = 0.01f;
+            float stepSize = 0.1f;
 
-            [unroll(300)]
+            [unroll(200)]
             while (distanceTravelled < distanceLimit)
             {
                 float3 rayPosition = camPos + viewVector * (distanceTravelled + intersectData.x);
-                totalDensity += SampleDensity(rayPosition) * stepSize;
+                totalDensity += SampleDensity(rayPosition, volumeBounds[i].origin, volumeBounds[i].extents) * stepSize;
                 distanceTravelled += stepSize;
             }
         }

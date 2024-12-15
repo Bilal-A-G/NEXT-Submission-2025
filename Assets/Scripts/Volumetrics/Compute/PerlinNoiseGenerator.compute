@@ -150,8 +150,7 @@ float3 imageDimensions;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float noise = pnoise(float3((float)id.x, (float)id.y, (float)id.z)/scale,
-      imageDimensions/scale, seed) * contribution;
+      imageDimensions/scale, seed);
 
-    //Scaling to make the perceptual brightness line up with Worley noise better
-    output[id.xyz] += channel * (noise * 0.25f);
+    output[id.xyz] = clamp(output[id.xyz] + channel * (noise + 0.5f) * contribution, -1.0f, 1.0f);
 }

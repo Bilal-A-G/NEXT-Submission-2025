@@ -50,7 +50,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //Theoretical max, in practice this is extremely rare
     float greatestDistance = (tileSize * tileSize) * 3.0f;
     
-    //Gives us numbers between -0.5 and 0.5, scaled by the contribution, so the contrast doesn't decrease
-    //as we increase the number of octaves
-    output[id.xyz] += channel * (contribution * 0.5 - contribution * closestDist/greatestDistance);
+    //Gives us numbers between -0.5 and 0.5
+    output[id.xyz] = clamp(
+        output[id.xyz] + channel * ((1.0f * contribution - closestDist/greatestDistance - 0.5f)) * contribution, -1.0f, 1.0f);
 }

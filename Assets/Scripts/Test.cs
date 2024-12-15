@@ -44,14 +44,14 @@ public class Test : MonoBehaviour
                         Vector4 processedData = new Vector4(currentData.x - invDensity, currentData.y - invDensity, 
                             currentData.z - invDensity, currentData.w - invDensity) * brightness;
                         
-                        texture.SetPixel(j, k, l, new Color(processedData.x, processedData.y, 
-                            processedData.z, 1));
+                        texture.SetPixel(j, k, l, new Color(processedData.x, processedData.x, 
+                            processedData.x, 1));
                         
                         if(i != 0 || l != 0)
                             continue;
                         
-                        myTex.SetPixel(j, k, new Color(processedData.x, 
-                            processedData.y, processedData.z, processedData.w));
+                        myTex.SetPixel(j, k, new Color(processedData.y, 
+                            processedData.y, processedData.y, 1));
                     }
                 }
             }

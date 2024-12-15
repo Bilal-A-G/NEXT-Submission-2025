@@ -178,7 +178,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.01
-  far clip plane: 100
+  far clip plane: 1000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -205,13 +205,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14464213, y: -0, z: -0, w: 0.9894841}
-  m_LocalPosition: {x: 0.04, y: 4.36, z: -7.53}
+  m_LocalRotation: {x: -0.12242362, y: -0, z: -0, w: 0.992478}
+  m_LocalPosition: {x: 0, y: 0.58, z: -12.44}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 16.633, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -14.064, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -430,7 +430,7 @@ MonoBehaviour:
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 1
       shader: {fileID: 7200000, guid: a795697b6fedd0a419dbe79fd16ee124, type: 3}
-      contribution: 0.751
+      contribution: 0
     - scale: 32
       octaves: 1
       channel: {x: 1, y: 0, z: 0, w: 0}
@@ -478,7 +478,7 @@ MonoBehaviour:
       contribution: 1
     textureOutput: {fileID: 0}
   brightness: 0.5
-  invDensity: 0.076
+  invDensity: 0
   myTex: {fileID: 0}
   testMat: {fileID: 2100000, guid: e761cf807462c0e469af30632bfe1b93, type: 2}
 --- !u!1 &832575517
@@ -697,8 +697,8 @@ Transform:
   m_GameObject: {fileID: 1911384411}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: 1.23, z: -0.82}
-  m_LocalScale: {x: 8.470523, y: 1.6412002, z: 9.235402}
+  m_LocalPosition: {x: 0.25, y: 1.5, z: -2.99}
+  m_LocalScale: {x: 10, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
