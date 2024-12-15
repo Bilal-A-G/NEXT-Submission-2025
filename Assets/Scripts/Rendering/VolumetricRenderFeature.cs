@@ -1,7 +1,10 @@
+using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using Volumetrics;
 using Volumetrics.Noise;
+using Object = UnityEngine.Object;
 
 namespace Rendering
 {
@@ -25,31 +28,33 @@ namespace Rendering
         [SerializeField] private float density;
         [SerializeField] [Range(0, 1)] private float threshold;
         [SerializeField] private float scale;
+        [SerializeField] private Color cloudTint;
 
         [SerializeField] private Texture2D weatherMap;
 
         private VolumetricRenderPass _renderPass;
+        private VolumeDefinition[] _allVolumes;
+
+        private ComputeBuffer _allBounds;
+        private Material _material;
         
         public override void Create()
         {
             if(volumetricShader == null || !Application.isPlaying)
                 return;
 
-            NoiseGenerator.GenerateNoise(ref noiseTextureConfigs);
-            
-            VolumeDefinition[] allVolumes = FindObjectsByType<VolumeDefinition>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            VolumeBounds[] allBounds = new VolumeBounds[allVolumes.Length];
-            for (int i = 0; i < allVolumes.Length; i++)
+            if (_renderPass == null)
             {
-                Transform currentTransform = allVolumes[i].transform;
-                allBounds[i] = new VolumeBounds(currentTransform.position, currentTransform.localScale);
+                Debug.Log("Allocating");
+                
+                NoiseGenerator.GenerateNoise(ref noiseTextureConfigs);
+                _allVolumes = FindObjectsByType<VolumeDefinition>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                _material = new Material(volumetricShader);
+                _allBounds =  new ComputeBuffer(_allVolumes.Length, Marshal.SizeOf<VolumeBounds>());
             }
             
-            if(allBounds.Length == 0)
-                return;
-            
-            _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, noiseTextureConfigs[0].textureOutput, 
-                noiseTextureConfigs[1].textureOutput, ref density, ref threshold, ref scale, weatherMap);
+            _renderPass = new VolumetricRenderPass(_allBounds, ref _allVolumes, noiseTextureConfigs[0].textureOutput, 
+                noiseTextureConfigs[1].textureOutput, density, threshold, scale, weatherMap, cloudTint, _material);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
@@ -66,7 +71,10 @@ namespace Rendering
             if(!Application.isPlaying)
                 return;
             
-            _renderPass.CleanUp();
+            _allBounds.Dispose();
+            Object.Destroy(_material);
+            
+            Debug.Log("De allocating");
         }
     }
 }

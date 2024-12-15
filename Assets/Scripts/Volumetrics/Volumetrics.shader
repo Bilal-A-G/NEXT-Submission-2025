@@ -40,6 +40,8 @@ Shader "CustomEffects/Volumetrics"
     float threshold;
     float scale;
 
+    float4 cloudColour;
+
     float R(float value, float low, float high, float newLow, float newHigh)
     {
         return newLow + (value - low) * (newHigh - newLow) / (high - low);
@@ -132,7 +134,7 @@ Shader "CustomEffects/Volumetrics"
         }
 
         float transmittance = exp(-totalDensity);
-        return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) * transmittance;
+        return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) + cloudColour * (1.0f - transmittance);
     }
     
     ENDHLSL

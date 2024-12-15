@@ -4,6 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
+using Volumetrics;
 
 namespace Rendering
 {
@@ -22,25 +23,25 @@ namespace Rendering
         private float _scale;
 
         private Texture2D _weatherMap;
+        private VolumeDefinition[] _allVolumes;
+        private Color _cloudColour;
         
-        public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, 
-            RenderTexture shapeNoise, RenderTexture detailNoise, ref float density, ref float threshold, 
-            ref float scale, Texture2D weatherMap)
+        public VolumetricRenderPass(ComputeBuffer allBounds, ref VolumeDefinition[] allVolumes, RenderTexture shapeNoise, 
+            RenderTexture detailNoise, float density, float threshold, 
+            float scale, Texture2D weatherMap, Color cloudColour, Material material)
         {
             if(!Application.isPlaying)
                 return;
-            
-            Debug.Log("Allocating");
-            _material = new Material(shader);
             
             _textureDescriptor = new RenderTextureDescriptor(Screen.width, 
                 Screen.height, RenderTextureFormat.Default, 0);
 
             _textureDescriptor.enableRandomWrite = true;
             
-            _allBounds =
-                new ComputeBuffer(allBounds.Length, Marshal.SizeOf<VolumeBounds>());
-            _allBounds.SetData(allBounds);
+            _allBounds = allBounds;
+            _allVolumes = allVolumes;
+            
+            _material = material;   
 
             _shapeNoise = shapeNoise;
             _detailNoise = detailNoise;
@@ -50,6 +51,33 @@ namespace Rendering
             _scale = scale;
 
             _weatherMap = weatherMap;
+            _cloudColour = cloudColour;
+        }
+
+        private void UpdateSettings()
+        {
+            VolumeBounds[] allBounds = new VolumeBounds[_allVolumes.Length];
+            for (int i = 0; i < _allVolumes.Length; i++)
+            {
+                Transform currentTransform = _allVolumes[i].transform;
+                allBounds[i] = new VolumeBounds(currentTransform.position, currentTransform.localScale);
+            }
+            
+            if(allBounds.Length == 0)
+                return;
+            
+            _allBounds.SetData(allBounds);
+            _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
+            
+            _material.SetTexture(Shader.PropertyToID("shapeNoise"), _shapeNoise);
+            _material.SetTexture(Shader.PropertyToID("weatherMap"), _weatherMap);
+            _material.SetTexture(Shader.PropertyToID("detailNoise"), _detailNoise);
+            
+            _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);
+            _material.SetFloat(Shader.PropertyToID("density"), _density);
+            _material.SetFloat(Shader.PropertyToID("scale"), _scale);
+            
+            _material.SetVector(Shader.PropertyToID("cloudColour"), (Vector4)_cloudColour);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -72,16 +100,8 @@ namespace Rendering
             
             if(!currentScreenHandle.IsValid() || !outputHandle.IsValid())
                 return;
-
-            _material.SetBuffer(Shader.PropertyToID("volumeBounds"), _allBounds);
             
-            _material.SetTexture(Shader.PropertyToID("shapeNoise"), _shapeNoise);
-            _material.SetTexture(Shader.PropertyToID("weatherMap"), _weatherMap);
-            _material.SetTexture(Shader.PropertyToID("detailNoise"), _detailNoise);
-            
-            _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);
-            _material.SetFloat(Shader.PropertyToID("density"), _density);
-            _material.SetFloat(Shader.PropertyToID("scale"), _scale);
+            UpdateSettings();
 
             RenderGraphUtils.BlitMaterialParameters passParams =
                 new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, outputHandle, _material, 0);
@@ -89,16 +109,6 @@ namespace Rendering
             renderGraph.AddBlitPass(passParams);
                 
             renderGraph.AddBlitPass(outputHandle, currentScreenHandle, Vector2.one, Vector2.zero);
-        }
-
-        public void CleanUp()
-        {
-            Debug.Log("De allocating");
-
-            Object.Destroy(_material);
-            Object.Destroy(_shapeNoise);
-            Object.Destroy(_detailNoise);
-            _allBounds.Dispose();
         }
     }
 }
