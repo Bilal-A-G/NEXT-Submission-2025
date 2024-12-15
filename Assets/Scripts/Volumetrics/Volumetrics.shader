@@ -40,11 +40,6 @@ Shader "CustomEffects/Volumetrics"
     float threshold;
     float scale;
 
-    float rScale;
-    float gScale;
-    float bScale;
-    float aScale;
-
     float R(float value, float low, float high, float newLow, float newHigh)
     {
         return newLow + (value - low) * (newHigh - newLow) / (high - low);
@@ -77,18 +72,27 @@ Shader "CustomEffects/Volumetrics"
             R(localCoordinates.z, -1, 1, 0, 1));
         
         float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale);
+        float4 detailSample = SAMPLE_TEXTURE3D(detailNoise, sampler_TrilinearRepeat, position.xyz * scale);
         float4 weatherMapSample = SAMPLE_TEXTURE2D(weatherMap, sampler_LinearRepeat, localCoordinates.xz);
         
-        float fbm = noiseSample.x * rScale + noiseSample.y * gScale + noiseSample.z * bScale + noiseSample.w * aScale;
+        float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
+        float finalShape = R(noiseSample.x, fbm - 1, 1, 0, 1);
+        
+        float detailFBM = detailSample.x * 0.625f + detailSample.y * 0.25f + detailSample.z * 0.125f;
+
+        float detailNoiseModification = 0.35f * exp(-threshold * 0.75f) * lerp(detailFBM, 1 - detailFBM,
+            clamp(localCoordinates.y * 5.0f, 0, 1));
         
         float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
         float shapeAltering = ShapeAlteringHeight(localCoordinates.y, weatherMapSample.z);
         float densityAltering = DensityAlteringHeight(localCoordinates.y, weatherMapSample.w, density);
         
-        float finalSample = clamp(R(fbm * shapeAltering, 1 - threshold * cloudProbability,
+        float finalSample = clamp(R(finalShape * shapeAltering, 1 - threshold * cloudProbability,
+            1, 0, 1), 0, 1);
+        float finalDensity = clamp(R(finalSample, detailNoiseModification,
             1, 0, 1), 0, 1) * densityAltering;
 
-        return finalSample;
+        return max(finalDensity - 0.6f, 0);
     }
 
     float4 ComputeVolumetrics(Varyings input) : SV_Target

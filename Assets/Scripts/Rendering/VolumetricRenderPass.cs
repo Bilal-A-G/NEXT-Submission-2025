@@ -20,28 +20,24 @@ namespace Rendering
         private float _density;
         private float _threshold;
         private float _scale;
-        
-        private float _rScale;
-        private float _gScale;
-        private float _bScale;
-        private float _aScale;
 
         private Texture2D _weatherMap;
         
         public VolumetricRenderPass(VolumeBounds[] allBounds, Shader shader, 
-            RenderTexture shapeNoise, RenderTexture detailNoise, ref float density, ref float threshold, ref float scale,
-            ref float rScale, ref float gScale, ref float bScale, ref float aScale, Texture2D weatherMap)
+            RenderTexture shapeNoise, RenderTexture detailNoise, ref float density, ref float threshold, 
+            ref float scale, Texture2D weatherMap)
         {
             if(!Application.isPlaying)
                 return;
             
+            Debug.Log("Allocating");
             _material = new Material(shader);
             
             _textureDescriptor = new RenderTextureDescriptor(Screen.width, 
                 Screen.height, RenderTextureFormat.Default, 0);
 
             _textureDescriptor.enableRandomWrite = true;
-
+            
             _allBounds =
                 new ComputeBuffer(allBounds.Length, Marshal.SizeOf<VolumeBounds>());
             _allBounds.SetData(allBounds);
@@ -52,11 +48,6 @@ namespace Rendering
             _density = density;
             _threshold = threshold;
             _scale = scale;
-
-            _rScale = rScale;
-            _gScale = gScale;
-            _bScale = bScale;
-            _aScale = aScale;
 
             _weatherMap = weatherMap;
         }
@@ -91,11 +82,6 @@ namespace Rendering
             _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);
             _material.SetFloat(Shader.PropertyToID("density"), _density);
             _material.SetFloat(Shader.PropertyToID("scale"), _scale);
-            
-            _material.SetFloat(Shader.PropertyToID("rScale"), _rScale);
-            _material.SetFloat(Shader.PropertyToID("gScale"), _gScale);
-            _material.SetFloat(Shader.PropertyToID("bScale"), _bScale);
-            _material.SetFloat(Shader.PropertyToID("aScale"), _aScale);
 
             RenderGraphUtils.BlitMaterialParameters passParams =
                 new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, outputHandle, _material, 0);
@@ -103,6 +89,16 @@ namespace Rendering
             renderGraph.AddBlitPass(passParams);
                 
             renderGraph.AddBlitPass(outputHandle, currentScreenHandle, Vector2.one, Vector2.zero);
+        }
+
+        public void CleanUp()
+        {
+            Debug.Log("De allocating");
+
+            Object.Destroy(_material);
+            Object.Destroy(_shapeNoise);
+            Object.Destroy(_detailNoise);
+            _allBounds.Dispose();
         }
     }
 }

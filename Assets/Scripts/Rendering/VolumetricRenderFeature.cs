@@ -25,16 +25,10 @@ namespace Rendering
         [SerializeField] private float density;
         [SerializeField] [Range(0, 1)] private float threshold;
         [SerializeField] private float scale;
-        
-        [SerializeField] private float rScale;
-        [SerializeField] private float gScale;
-        [SerializeField] private float bScale;
-        [SerializeField] private float aScale;
 
         [SerializeField] private Texture2D weatherMap;
 
         private VolumetricRenderPass _renderPass;
-        private Material _material;
         
         public override void Create()
         {
@@ -55,8 +49,7 @@ namespace Rendering
                 return;
             
             _renderPass = new VolumetricRenderPass(allBounds, volumetricShader, noiseTextureConfigs[0].textureOutput, 
-                noiseTextureConfigs[1].textureOutput, ref density, ref threshold, ref scale, 
-                ref rScale, ref gScale, ref bScale, ref aScale, weatherMap);
+                noiseTextureConfigs[1].textureOutput, ref density, ref threshold, ref scale, weatherMap);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
@@ -65,24 +58,15 @@ namespace Rendering
             if(_renderPass == null)
                 return;
             
-            if(renderingData.cameraData.cameraType != CameraType.Game)
-                return;
-            
             renderer.EnqueuePass(_renderPass);
         }
-        
+
         protected override void Dispose(bool disposing)
         {
-            if(_material == null)
+            if(!Application.isPlaying)
                 return;
             
-            if (Application.isPlaying)
-            {
-                Destroy(_material);
-                return;
-            }
-            
-            DestroyImmediate(_material);
+            _renderPass.CleanUp();
         }
     }
 }
