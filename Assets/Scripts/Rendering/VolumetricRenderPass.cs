@@ -24,11 +24,12 @@ namespace Rendering
 
         private Texture2D _weatherMap;
         private VolumeDefinition[] _allVolumes;
-        private Color _cloudColour;
+        private float _absorption;
+        private float _shadowThreshold;
         
         public VolumetricRenderPass(ComputeBuffer allBounds, ref VolumeDefinition[] allVolumes, RenderTexture shapeNoise, 
             RenderTexture detailNoise, float density, float threshold, 
-            float scale, Texture2D weatherMap, Color cloudColour, Material material)
+            float scale, Texture2D weatherMap, Material material, float absorption, float shadowThreshold)
         {
             if(!Application.isPlaying)
                 return;
@@ -51,7 +52,9 @@ namespace Rendering
             _scale = scale;
 
             _weatherMap = weatherMap;
-            _cloudColour = cloudColour;
+
+            _absorption = absorption;
+            _shadowThreshold = shadowThreshold;
         }
 
         private void UpdateSettings()
@@ -76,8 +79,8 @@ namespace Rendering
             _material.SetFloat(Shader.PropertyToID("threshold"), _threshold);
             _material.SetFloat(Shader.PropertyToID("density"), _density);
             _material.SetFloat(Shader.PropertyToID("scale"), _scale);
-            
-            _material.SetVector(Shader.PropertyToID("cloudColour"), (Vector4)_cloudColour);
+            _material.SetFloat(Shader.PropertyToID("absorption"), _absorption);
+            _material.SetFloat(Shader.PropertyToID("shadowThreshold"), _shadowThreshold);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)

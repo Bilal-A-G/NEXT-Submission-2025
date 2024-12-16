@@ -39,9 +39,9 @@ Shader "CustomEffects/Volumetrics"
     float density;
     float threshold;
     float scale;
-
-    float4 cloudColour;
-
+    float absorption;
+    float shadowThreshold;
+    
     float R(float value, float low, float high, float newLow, float newHigh)
     {
         return newLow + (value - low) * (newHigh - newLow) / (high - low);
@@ -73,9 +73,9 @@ Shader "CustomEffects/Volumetrics"
             R(localCoordinates.y, -1, 1, 0, 1),
             R(localCoordinates.z, -1, 1, 0, 1));
         
-        float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale);
-        float4 detailSample = SAMPLE_TEXTURE3D(detailNoise, sampler_TrilinearRepeat, position.xyz * scale);
-        float4 weatherMapSample = SAMPLE_TEXTURE2D(weatherMap, sampler_LinearRepeat, localCoordinates.xz);
+        float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale, 0);
+        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat, position.xyz * scale, 0);
+        float4 weatherMapSample = SAMPLE_TEXTURE2D_LOD(weatherMap, sampler_LinearRepeat, localCoordinates.xz, 0);
         
         float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
         float finalShape = R(noiseSample.x, fbm - 1, 1, 0, 1);
@@ -110,31 +110,66 @@ Shader "CustomEffects/Volumetrics"
 
         float nonLinearDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,sampler_LinearClamp, input.texcoord.xy);
         float depth = LinearEyeDepth(nonLinearDepth, _ZBufferParams);
+        
+        int sunSteps = 5;
+        
+        float transmittance = 1;
+        float radiance = 0;
 
         float totalDensity = 0;
+        float3 accumulatedLight = float3(0, 0, 0);
+
+        float stepSize = 0.1f;
+        float lightingStepSize = 0.1f;
 
         for (int i = 0; i < numVolumes; i++)
         {
-            float3 boundsMin = volumeBounds[i].origin - volumeBounds[i].extents/2.0f;
-            float3 boundsMax = volumeBounds[i].origin + volumeBounds[i].extents/2.0f;
+            float3 boundsOrigin = volumeBounds[i].origin;
+            float3 boundsExtents = volumeBounds[i].extents;
+            
+            float3 boundsMin = boundsOrigin - boundsExtents/2.0f;
+            float3 boundsMax = boundsOrigin + boundsExtents/2.0f;
             
             float2 intersectData = RayBoxIntersect(boundsMin, boundsMax, camPos, viewVector);
 
             float distanceTravelled = 0;
             float distanceLimit = min(depth - intersectData.x, intersectData.y);
-            float stepSize = 0.1f;
-
-            [unroll(200)]
+            
+            [loop]
             while (distanceTravelled < distanceLimit)
             {
                 float3 rayPosition = camPos + viewVector * (distanceTravelled + intersectData.x);
-                totalDensity += SampleDensity(rayPosition, volumeBounds[i].origin, volumeBounds[i].extents) * stepSize;
+                float densityAtPoint = SampleDensity(rayPosition, boundsOrigin, boundsExtents) * stepSize;
                 distanceTravelled += stepSize;
+
+                if(densityAtPoint <= 0)
+                    continue;
+
+                float3 sampleColour = float3(1, 1, 1) * densityAtPoint;
+                totalDensity += densityAtPoint;
+                
+                float3 lightDirection = normalize(_MainLightPosition.xyz);
+
+                float lightTransmission = 0.0f;
+                for (int v = 0; v < sunSteps; v++)
+                {
+                    rayPosition += lightDirection * lightingStepSize;
+                    lightTransmission += SampleDensity(rayPosition, boundsOrigin, boundsExtents);
+                }
+
+                float shadow = shadowThreshold + exp(-lightTransmission) * (1 - shadowThreshold);
+                    
+                sampleColour *= _MainLightColor.xyz * shadow;
+                accumulatedLight += sampleColour * transmittance;
+
+                transmittance *= exp(-densityAtPoint * absorption);
+                if(transmittance <= 0.01f)
+                    break;
             }
         }
 
-        float transmittance = exp(-totalDensity);
-        return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) + cloudColour * (1.0f - transmittance);
+        float4 background = SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy);
+        return background * exp(-totalDensity) + float4(accumulatedLight, 1.0f);
     }
     
     ENDHLSL

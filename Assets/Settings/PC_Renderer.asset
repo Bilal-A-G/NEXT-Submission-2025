@@ -122,10 +122,11 @@ MonoBehaviour:
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
     textureOutput: {fileID: 0}
-  density: 40
-  threshold: 0.549
-  scale: 0.4
-  cloudTint: {r: 1, g: 1, b: 1, a: 1}
+  absorption: 6
+  shadowThreshold: 0.17
+  density: 15.01
+  coverage: 0.669
+  uvScale: 0.2
   weatherMap: {fileID: 2800000, guid: 425e64ee7b959704ca64580d5195ee60, type: 3}
 --- !u!114 &7833122117494664109
 MonoBehaviour:

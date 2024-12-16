@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Serialization;
 using Volumetrics;
 using Volumetrics.Noise;
 using Object = UnityEngine.Object;
@@ -25,10 +26,11 @@ namespace Rendering
         [SerializeField] private Shader volumetricShader;
         [SerializeField] private NoiseTextureData[] noiseTextureConfigs;
 
+        [SerializeField] private float absorption;
+        [SerializeField] [Range(0, 1)] private float shadowThreshold;
         [SerializeField] private float density;
-        [SerializeField] [Range(0, 1)] private float threshold;
-        [SerializeField] private float scale;
-        [SerializeField] private Color cloudTint;
+        [SerializeField] [Range(0, 1)] private float coverage;
+        [SerializeField] private float uvScale;
 
         [SerializeField] private Texture2D weatherMap;
 
@@ -54,8 +56,8 @@ namespace Rendering
             }
             
             _renderPass = new VolumetricRenderPass(_allBounds, ref _allVolumes, noiseTextureConfigs[0].textureOutput, 
-                noiseTextureConfigs[1].textureOutput, density, threshold, scale, weatherMap, cloudTint, _material);
-            _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+                noiseTextureConfigs[1].textureOutput, density, coverage, uvScale, weatherMap, _material, absorption, shadowThreshold);
+            _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
