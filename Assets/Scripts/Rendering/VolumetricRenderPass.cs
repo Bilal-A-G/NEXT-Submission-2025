@@ -39,11 +39,17 @@ namespace Rendering
         private float _sunIntensity;
         private float _sunIntensityRadius;
         
+        private float _xOffset;
+        private float _zOffset;
+        private float _xDetailOffset;
+        private float _zDetailOffset;
+        
         public VolumetricRenderPass(ComputeBuffer allBounds, ref VolumeDefinition[] allVolumes, RenderTexture shapeNoise, 
             RenderTexture detailNoise, float density, float threshold, 
             float scale, Texture2D weatherMap, Material material, float absorption, float attenuationClamp, 
             float outScatteringAmbient, float minimumAttenuationAmbient, float detailScale, Texture2D blueNoise, float atmosphericBlending,
-            float inScatter, float outScatter, float scatterLerp, float sunIntensity, float sunIntensityRadius)
+            float inScatter, float outScatter, float scatterLerp, float sunIntensity, float sunIntensityRadius, float xOffset,
+            float zOffset, float xDetailOffset, float zDetailOffset)
         {
             if(!Application.isPlaying)
                 return;
@@ -81,6 +87,11 @@ namespace Rendering
             _scatterLerp = scatterLerp;
             _sunIntensity = sunIntensity;
             _sunIntensityRadius = sunIntensityRadius;
+
+            _xOffset = xOffset;
+            _zOffset = zOffset;
+            _xDetailOffset = xDetailOffset;
+            _zDetailOffset = zDetailOffset;
         }
 
         private void UpdateSettings()
@@ -122,6 +133,11 @@ namespace Rendering
             _material.SetFloat(Shader.PropertyToID("inScatter"), _inScatter);
             _material.SetFloat(Shader.PropertyToID("outScatter"), _outScatter);
             _material.SetFloat(Shader.PropertyToID("scatterLerp"), _scatterLerp);
+            
+            _material.SetFloat(Shader.PropertyToID("xOffset"), _xOffset);
+            _material.SetFloat(Shader.PropertyToID("zOffset"), _zOffset);
+            _material.SetFloat(Shader.PropertyToID("detailXOffset"), _xDetailOffset);
+            _material.SetFloat(Shader.PropertyToID("detailZOffset"), _zDetailOffset);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)

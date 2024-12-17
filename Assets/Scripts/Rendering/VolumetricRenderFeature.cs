@@ -37,6 +37,11 @@ namespace Rendering
         [SerializeField] private float uvDetailScale;
         [SerializeField] private float atmosphericBlending;
 
+        public float xOffset;
+        public float zOffset;
+        public float xDetailOffset;
+        public float zDetailOffset;
+
         [SerializeField] [Range(0, 1)] private float inScatter;
         [SerializeField] [Range(0, 1)] private float outScatter;
         [SerializeField] [Range(0, 1)] private float scatterLerp;
@@ -69,7 +74,8 @@ namespace Rendering
             _renderPass = new VolumetricRenderPass(_allBounds, ref _allVolumes, noiseTextureConfigs[0].textureOutput, 
                 noiseTextureConfigs[1].textureOutput, density, coverage, uvScale, weatherMap, _material, 
                 absorption, attenuationClamp, outScatteringAmbient, minimumAttenuationAmbient, uvDetailScale, blueNoise, 
-                atmosphericBlending, inScatter, outScatter, scatterLerp, sunIntensity, sunIntensityRadius);
+                atmosphericBlending, inScatter, outScatter, scatterLerp, sunIntensity, sunIntensityRadius, 
+                xOffset, zOffset, xDetailOffset, zDetailOffset);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
             
             Debug.Log("Finished creation");

@@ -52,6 +52,11 @@ Shader "CustomEffects/Volumetrics"
     float outScatter;
     float scatterLerp;
 
+    float xOffset;
+    float zOffset;
+    float detailXOffset;
+    float detailZOffset;
+
     float atmosphericBlending;
     
     float R(float value, float low, float high, float newLow, float newHigh)
@@ -91,8 +96,10 @@ Shader "CustomEffects/Volumetrics"
             R(localCoordinates.y, -1, 1, 0, 1),
             R(localCoordinates.z, -1, 1, 0, 1));
         
-        float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale, 0);
-        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat, position.xyz * detailScale, 0);
+        float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat,
+            (position.xyz + float3(xOffset, 0, zOffset)) * scale, 0);
+        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat,
+            (position.xyz + float3(detailXOffset, 0, detailZOffset)) * detailScale, 0);
         float4 weatherMapSample = SAMPLE_TEXTURE2D_LOD(weatherMap, sampler_LinearRepeat, localCoordinates.xz, 0);
         
         float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
@@ -229,7 +236,9 @@ Shader "CustomEffects/Volumetrics"
         }
 
         float4 ambient = unity_AmbientSky + unity_AmbientGround + unity_AmbientEquator;
-        float attenuatedTransmittance = clamp(pow(2, -distanceFade/(atmosphericBlending * 100)) * (1 - transmittance), 0, 1);
+        float attenuatedTransmittance = clamp(exp(-distanceFade / (atmosphericBlending * 100)) *
+            (1 - transmittance), 0, 1);
+        attenuatedTransmittance = Smootherstep01(attenuatedTransmittance);
         
         return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) * (1 - attenuatedTransmittance) +
           attenuatedTransmittance * _MainLightColor * radiance + ambient * (1 - radiance);
