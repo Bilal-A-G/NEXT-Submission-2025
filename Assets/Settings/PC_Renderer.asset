@@ -83,7 +83,7 @@ MonoBehaviour:
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 0.763
     - scale: 16
-      octaves: 3
+      octaves: 2
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
@@ -103,31 +103,41 @@ MonoBehaviour:
     textureOutput: {fileID: 0}
   - textureDimensions: {x: 32, y: 32, z: 32}
     channelNoises:
-    - scale: 8
-      octaves: 1
+    - scale: 16
+      octaves: 2
       channel: {x: 1, y: 0, z: 0, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
-    - scale: 4
-      octaves: 1
+    - scale: 8
+      octaves: 2
       channel: {x: 0, y: 1, z: 0, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
-    - scale: 2
-      octaves: 1
+    - scale: 4
+      octaves: 2
       channel: {x: 0, y: 0, z: 1, w: 0}
       type: 0
       shader: {fileID: 7200000, guid: e4f2424a86760bd4d971174180ee4a6a, type: 3}
       contribution: 1
     textureOutput: {fileID: 0}
-  absorption: 6
-  shadowThreshold: 0.17
-  density: 15.01
-  coverage: 0.669
-  uvScale: 0.2
-  weatherMap: {fileID: 2800000, guid: 425e64ee7b959704ca64580d5195ee60, type: 3}
+  blueNoise: {fileID: 2800000, guid: ce66b460c45428546b7b5d31b15c2aae, type: 3}
+  absorption: 2.48
+  attenuationClamp: 0.372
+  minimumAttenuationAmbient: 0.276
+  density: 11.81
+  coverage: 0.697
+  outScatteringAmbient: 0.718
+  uvScale: 0.003
+  uvDetailScale: 0.04
+  test: 27.1
+  inScatter: 1
+  outScatter: 0.39
+  scatterLerp: 0
+  sunIntensity: 1
+  sunIntensityRadius: 6.63
+  weatherMap: {fileID: 2800000, guid: 96cf0350590a2244fa90d2e641a83c70, type: 3}
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

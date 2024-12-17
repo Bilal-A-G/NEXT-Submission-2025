@@ -25,13 +25,24 @@ namespace Rendering
     {
         [SerializeField] private Shader volumetricShader;
         [SerializeField] private NoiseTextureData[] noiseTextureConfigs;
+        [SerializeField] private Texture2D blueNoise;
 
         [SerializeField] private float absorption;
-        [SerializeField] [Range(0, 1)] private float shadowThreshold;
+        [SerializeField] [Range(0, 1)] private float attenuationClamp;
+        [SerializeField] [Range(0, 1)] private float minimumAttenuationAmbient;
         [SerializeField] private float density;
         [SerializeField] [Range(0, 1)] private float coverage;
+        [SerializeField] [Range(0, 1)] private float outScatteringAmbient;
         [SerializeField] private float uvScale;
+        [SerializeField] private float uvDetailScale;
+        [SerializeField] private float atmosphericBlending;
 
+        [SerializeField] [Range(0, 1)] private float inScatter;
+        [SerializeField] [Range(0, 1)] private float outScatter;
+        [SerializeField] [Range(0, 1)] private float scatterLerp;
+        [SerializeField] private float sunIntensity;
+        [SerializeField] private float sunIntensityRadius;
+        
         [SerializeField] private Texture2D weatherMap;
 
         private VolumetricRenderPass _renderPass;
@@ -56,8 +67,12 @@ namespace Rendering
             }
             
             _renderPass = new VolumetricRenderPass(_allBounds, ref _allVolumes, noiseTextureConfigs[0].textureOutput, 
-                noiseTextureConfigs[1].textureOutput, density, coverage, uvScale, weatherMap, _material, absorption, shadowThreshold);
+                noiseTextureConfigs[1].textureOutput, density, coverage, uvScale, weatherMap, _material, 
+                absorption, attenuationClamp, outScatteringAmbient, minimumAttenuationAmbient, uvDetailScale, blueNoise, 
+                atmosphericBlending, inScatter, outScatter, scatterLerp, sunIntensity, sunIntensityRadius);
             _renderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
+            
+            Debug.Log("Finished creation");
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -70,11 +85,11 @@ namespace Rendering
 
         protected override void Dispose(bool disposing)
         {
-            if(!Application.isPlaying)
+            if(Application.isPlaying || _allBounds == null || _material == null)
                 return;
             
             _allBounds.Dispose();
-            Object.Destroy(_material);
+            Object.DestroyImmediate(_material);
             
             Debug.Log("De allocating");
         }

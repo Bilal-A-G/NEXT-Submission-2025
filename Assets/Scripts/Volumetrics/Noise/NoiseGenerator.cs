@@ -14,7 +14,7 @@ namespace Volumetrics
         private static void DispatchComputeOctaves(ref NoiseTextureData textureData)
         {
             RenderTexture noise = new RenderTexture(textureData.textureDimensions.x, 
-                textureData.textureDimensions.y, 0, GraphicsFormat.R32G32B32A32_SFloat);
+                textureData.textureDimensions.y, 0, GraphicsFormat.R8G8B8A8_SNorm);
             noise.dimension = TextureDimension.Tex3D;
             noise.volumeDepth = textureData.textureDimensions.z;
             noise.enableRandomWrite = true;
@@ -63,7 +63,7 @@ namespace Volumetrics
         public static async Task<Vector4[][]> GPUReadBackFromTexture(Vector3Int dimensions, RenderTexture texture)
         {
             AsyncGPUReadbackRequest req = await AsyncGPUReadback.RequestAsync(texture, 0, 
-                0, dimensions.x, 0, dimensions.y, 0, dimensions.z, TextureFormat.RGBAFloat);
+                0, dimensions.x, 0, dimensions.y, 0, dimensions.z, TextureFormat.RGBAHalf);
             
             Vector4[][] data = new Vector4[dimensions.z][];
             for (int i = 0; i < dimensions.z; i++)

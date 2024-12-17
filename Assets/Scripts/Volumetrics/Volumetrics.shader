@@ -35,22 +35,40 @@ Shader "CustomEffects/Volumetrics"
     
     Texture3D<float4> shapeNoise;
     Texture3D<float4> detailNoise;
+    Texture2D<float4> blueNoise;
 
     float density;
     float threshold;
     float scale;
+    float detailScale;
     float absorption;
-    float shadowThreshold;
+    float attenuationClamp;
+    float minimumAttenuationAmbient;
+    float outScatteringAmbient;
+
+    float sunIntensity;
+    float sunIntensityRadius;
+    float inScatter;
+    float outScatter;
+    float scatterLerp;
+
+    float atmosphericBlending;
     
     float R(float value, float low, float high, float newLow, float newHigh)
     {
         return newLow + (value - low) * (newHigh - newLow) / (high - low);
     }
 
+    float HenyeyGreenstein(float dotAngle, float g)
+    {
+        return 1.0f/(4.0f * PI) * ((1.0f - pow(g, 2.0f)) /
+            pow(1.0f + pow(g, 2.0f) - g * 2.0f * cos(dotAngle), 3.0f/2.0f));
+    }
+
     float ShapeAlteringHeight(float percentHeight, float maxHeightPercent)
     {
         float bottomRounding = clamp(R(percentHeight, 0.0f, 0.07f, 0.0f, 1.0f), 0.0f, 1.0f);
-        float topRounding = clamp(R(percentHeight, maxHeightPercent * 0.2f, 
+        float topRounding = clamp(R(percentHeight, maxHeightPercent * 0.1f, 
                 maxHeightPercent, 1, 0), 0.0f, 1.0f);
 
         return bottomRounding * topRounding;
@@ -74,7 +92,7 @@ Shader "CustomEffects/Volumetrics"
             R(localCoordinates.z, -1, 1, 0, 1));
         
         float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat, position.xyz * scale, 0);
-        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat, position.xyz * scale, 0);
+        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat, position.xyz * detailScale, 0);
         float4 weatherMapSample = SAMPLE_TEXTURE2D_LOD(weatherMap, sampler_LinearRepeat, localCoordinates.xz, 0);
         
         float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
@@ -86,7 +104,7 @@ Shader "CustomEffects/Volumetrics"
             clamp(localCoordinates.y * 5.0f, 0, 1));
         
         float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
-        float shapeAltering = ShapeAlteringHeight(localCoordinates.y, weatherMapSample.z);
+        float shapeAltering = ShapeAlteringHeight(localCoordinates.y, 1.0f);
         float densityAltering = DensityAlteringHeight(localCoordinates.y, weatherMapSample.w, density);
         
         float finalSample = clamp(R(finalShape * shapeAltering, 1 - threshold * cloudProbability,
@@ -111,16 +129,20 @@ Shader "CustomEffects/Volumetrics"
         float nonLinearDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,sampler_LinearClamp, input.texcoord.xy);
         float depth = LinearEyeDepth(nonLinearDepth, _ZBufferParams);
         
-        int sunSteps = 5;
+        int sunSteps = 3;
         
         float transmittance = 1;
         float radiance = 0;
+        float distanceFade = 0;
+    
+        float highDetailStepSize = 1.0f;
+        float lowDetailStepSize = 3.0f;
 
-        float totalDensity = 0;
-        float3 accumulatedLight = float3(0, 0, 0);
+        float highDetailDistanceTravelled = 0.0f;
+        float stepSize = lowDetailStepSize;
 
-        float stepSize = 0.1f;
-        float lightingStepSize = 0.1f;
+        float blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_TrilinearRepeat, input.texcoord.xy * 1.1f);
+        float distanceTravelled = 0;
 
         for (int i = 0; i < numVolumes; i++)
         {
@@ -131,45 +153,86 @@ Shader "CustomEffects/Volumetrics"
             float3 boundsMax = boundsOrigin + boundsExtents/2.0f;
             
             float2 intersectData = RayBoxIntersect(boundsMin, boundsMax, camPos, viewVector);
+            float lightingStepSize = 1.0f;
 
-            float distanceTravelled = 0;
             float distanceLimit = min(depth - intersectData.x, intersectData.y);
+
+            camPos += viewVector * ((blueNoiseOffset - 0.5f) * 2 * stepSize);
             
             [loop]
             while (distanceTravelled < distanceLimit)
             {
                 float3 rayPosition = camPos + viewVector * (distanceTravelled + intersectData.x);
+                float3 localCoordinates = (rayPosition.xyz - boundsOrigin)/boundsExtents * 2;
+                localCoordinates = float3(
+                    R(localCoordinates.x, -1, 1, 0, 1),
+                    R(localCoordinates.y, -1, 1, 0, 1),
+                    R(localCoordinates.z, -1, 1, 0, 1));
+                
                 float densityAtPoint = SampleDensity(rayPosition, boundsOrigin, boundsExtents) * stepSize;
                 distanceTravelled += stepSize;
+                if(stepSize == highDetailStepSize)
+                    highDetailDistanceTravelled += highDetailStepSize;
+                
+                if(densityAtPoint > 0.0f &&
+                    stepSize == lowDetailStepSize)
+                {
+                     distanceTravelled -= stepSize * 2;
+                     stepSize = highDetailStepSize;
+                     highDetailDistanceTravelled = 0.0f;
+                     distanceFade = length(camPos - rayPosition);
+                    
+                     continue;
+                }
+                if (densityAtPoint <= 0.0f && highDetailDistanceTravelled > highDetailStepSize * 10.0f &&
+                    stepSize == highDetailStepSize)
+                {
+                    stepSize = lowDetailStepSize;
+                    continue;
+                }
 
                 if(densityAtPoint <= 0)
                     continue;
 
-                float3 sampleColour = float3(1, 1, 1) * densityAtPoint;
-                totalDensity += densityAtPoint;
-                
                 float3 lightDirection = normalize(_MainLightPosition.xyz);
 
-                float lightTransmission = 0.0f;
+                float toSunDensity = 0.0f;
                 for (int v = 0; v < sunSteps; v++)
                 {
                     rayPosition += lightDirection * lightingStepSize;
-                    lightTransmission += SampleDensity(rayPosition, boundsOrigin, boundsExtents);
+                    toSunDensity += SampleDensity(rayPosition, boundsOrigin, boundsExtents) * lightingStepSize;
+
+                    if(toSunDensity >= 1.0f)
+                        break;
                 }
+                
+                float shadow = clamp(exp(-toSunDensity), attenuationClamp, 1.0f);
+                shadow = max(toSunDensity * minimumAttenuationAmbient, shadow);
+                float outScattering = 1 - saturate(outScatteringAmbient * 2 *
+                    pow(densityAtPoint * (1 - transmittance), R(localCoordinates.y, 0.3f, 0.9f, 0.5, 1.0f))) *
+                        saturate(pow(R(localCoordinates.y, 0, 0.3f, 0.8f, 1.0f), 0.8f));
 
-                float shadow = shadowThreshold + exp(-lightTransmission) * (1 - shadowThreshold);
-                    
-                sampleColour *= _MainLightColor.xyz * shadow;
-                accumulatedLight += sampleColour * transmittance;
-
+                float dotAngle = dot(lightDirection, normalize(rayPosition - camPos));
+                float sunLocalIntensity = sunIntensity * pow(clamp(dotAngle, 0, 1), sunIntensityRadius);
+                float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, inScatter), sunLocalIntensity),
+                    HenyeyGreenstein(dotAngle, -outScatter), scatterLerp);
+                
+                radiance += densityAtPoint * transmittance * outScattering * shadow * anisotropicScattering;
                 transmittance *= exp(-densityAtPoint * absorption);
+
+                if(radiance >= 1.0f)
+                    break;
+                
                 if(transmittance <= 0.01f)
                     break;
             }
         }
 
-        float4 background = SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy);
-        return background * exp(-totalDensity) + float4(accumulatedLight, 1.0f);
+        float4 ambient = unity_AmbientSky + unity_AmbientGround + unity_AmbientEquator;
+        float attenuatedTransmittance = clamp(pow(2, -distanceFade/(atmosphericBlending * 100)) * (1 - transmittance), 0, 1);
+        
+        return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) * (1 - attenuatedTransmittance) +
+          attenuatedTransmittance * _MainLightColor * radiance + ambient * (1 - radiance);
     }
     
     ENDHLSL

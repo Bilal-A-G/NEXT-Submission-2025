@@ -22,7 +22,7 @@ public class Test : MonoBehaviour
         textures = new Texture3D[noiseTextureConfigs.Length];
 
         myTex = new Texture2D(noiseTextureConfigs[0].textureDimensions.x, 
-            noiseTextureConfigs[0].textureDimensions.y, TextureFormat.RGBAFloat, false);
+            noiseTextureConfigs[0].textureDimensions.y, TextureFormat.RGBAHalf, false);
 
         for (int i = 0; i < noiseTextureConfigs.Length; i++)
         { 
@@ -30,7 +30,7 @@ public class Test : MonoBehaviour
             Vector3Int textureDimensions = currentConfig.textureDimensions;
            
             Texture3D texture = new Texture3D(textureDimensions.x, textureDimensions.y, 
-                textureDimensions.z, TextureFormat.RGBAFloat, false);
+                textureDimensions.z, TextureFormat.RGBAHalf, false);
 
             Vector4[][] data = await NoiseGenerator.GPUReadBackFromTexture(textureDimensions, currentConfig.textureOutput);
             
