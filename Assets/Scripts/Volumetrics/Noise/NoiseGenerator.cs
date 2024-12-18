@@ -13,35 +13,37 @@ namespace Volumetrics
         //Computes several octaves of noise for a single channel
         private static void DispatchComputeOctaves(ref NoiseTextureData textureData)
         {
-            RenderTexture noise = new RenderTexture(textureData.textureDimensions.x, 
-                textureData.textureDimensions.y, 0, GraphicsFormat.R8G8B8A8_SNorm);
+            int textureSize = (int)Mathf.Pow(2, textureData.powTwoExponentTextureSize);
+            
+            RenderTexture noise = new RenderTexture(textureSize, textureSize, 
+                0, GraphicsFormat.R8G8B8A8_SNorm);
             noise.dimension = TextureDimension.Tex3D;
-            noise.volumeDepth = textureData.textureDimensions.z;
+            noise.volumeDepth = textureSize;
             noise.enableRandomWrite = true;
             noise.Create();
             
             for (int i = 0; i < textureData.channelNoises.Count; i++)
             {
                 NoiseData channelData = textureData.channelNoises[i];
-                Vector3Int textureDimensions = textureData.textureDimensions;
+                int noiseScale = (int)Mathf.Pow(2, channelData.powTwoExponentNoiseScale);
                 
-                if (textureDimensions.x % channelData.scale != 0 || textureDimensions.y % channelData.scale != 0 || 
-                    textureDimensions.z % channelData.scale != 0)
+                if (textureSize % noiseScale != 0)
                 {
                     throw new InvalidDataException("Error, cannot divide texture with dimensions " + 
-                                                   textureData.textureDimensions + " int tiles of size " + channelData.scale);
+                                                   textureSize + " int tiles of size " + noise);
                 }
              
                 for (int v = 0; v < channelData.octaves; v++)
                 {
                     float contribution = Mathf.Pow(2, -v) * channelData.contribution;
-                    int scale = (int)(channelData.scale / Mathf.Pow(2, v));
+                    int scale = (int)(noiseScale / Mathf.Pow(2, v));
                     
                     if (scale < 1)
                         scale = 1;
                     
-                    NoiseHelper.EnumToNoiseFunction(channelData.type).Invoke(channelData.shader, textureData.textureDimensions, 
-                        contribution, scale, channelData.channel, ref noise);
+                    NoiseHelper.EnumToNoiseFunction(channelData.type).Invoke(NoiseHelper.EnumToShader(channelData.type), 
+                        textureSize, contribution, scale, 
+                        NoiseHelper.NoiseChannelToVector(channelData.channel), ref noise);
                 }
             }
 
@@ -51,7 +53,7 @@ namespace Volumetrics
         //Scale has to be a power of 2
         //Texture size has to be a power of 2 also
         //This is the only configuration that guarantees divisibility across all octaves 
-        public static void GenerateNoise(ref NoiseTextureData[] textureConfigs)
+        public static void GenerateNoise(NoiseTextureData[] textureConfigs)
         {
             for (int i = 0; i < textureConfigs.Length; i++)
             {

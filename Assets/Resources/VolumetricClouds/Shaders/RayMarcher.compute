@@ -1,0 +1,9 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> input;
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    input[id.xy] = float4(1, 0, 0, 0);
+}

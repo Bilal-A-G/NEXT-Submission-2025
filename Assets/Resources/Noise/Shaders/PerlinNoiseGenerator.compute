@@ -144,13 +144,13 @@ float contribution;
 float4 channel;
 
 float seed;
-float3 imageDimensions;
+int textureSize;
 
 [numthreads(1,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float noise = pnoise(float3((float)id.x, (float)id.y, (float)id.z)/scale,
-      imageDimensions/scale, seed);
+      float3((float)textureSize, (float)textureSize, (float)textureSize)/scale, seed);
 
     output[id.xyz] = clamp(output[id.xyz] + channel * (noise + 0.5f) * contribution, -1.0f, 1.0f);
 }

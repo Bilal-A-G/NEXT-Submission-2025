@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac79cd4e88b035f48bca1e9d87391ed7, type: 3}
+  m_Name: Custom
+  m_EditorClassIdentifier: 
+  weatherMap: {fileID: 2800000, guid: 5b58a06207b3e7d4bb38b41c68598d9b, type: 3}
+  globalDensity: 20
+  globalCoverage: 0.589
+  shapeNoiseUVScale: 0.003
+  detailNoiseUVScale: 0.08
+  shapeNoiseUVOffset: {x: 0, y: 0}
+  detailNoiseUVOffset: {x: 0, y: 0}
+  shapeNoise:
+    powTwoExponentTextureSize: 7
+    channelNoises:
+    - powTwoExponentNoiseScale: 5
+      octaves: 1
+      channel: 0
+      type: 0
+      contribution: 0.763
+    - powTwoExponentNoiseScale: 5
+      octaves: 5
+      channel: 0
+      type: 1
+      contribution: 0.18
+    - powTwoExponentNoiseScale: 4
+      octaves: 2
+      channel: 1
+      type: 0
+      contribution: 1
+    - powTwoExponentNoiseScale: 3
+      octaves: 2
+      channel: 2
+      type: 0
+      contribution: 1
+    - powTwoExponentNoiseScale: 2
+      octaves: 2
+      channel: 3
+      type: 0
+      contribution: 1
+    textureOutput: {fileID: 0}
+  detailNoise:
+    powTwoExponentTextureSize: 5
+    channelNoises:
+    - powTwoExponentNoiseScale: 4
+      octaves: 2
+      channel: 0
+      type: 0
+      contribution: 1
+    - powTwoExponentNoiseScale: 3
+      octaves: 2
+      channel: 1
+      type: 0
+      contribution: 1
+    - powTwoExponentNoiseScale: 2
+      octaves: 2
+      channel: 2
+      type: 0
+      contribution: 1
+    textureOutput: {fileID: 0}
+  absorption: 3
+  atmosphereBlending: 100
+  sunExtraIntensity: 1
+  sunExtraIntensityLocalization: 1
+  minimumShadowing: 0.192
+  shadowDetail: 0.125
+  powderAmount: 0.455
+  inScattering: 1
+  outScattering: 0
+  inToOutScatteringInterpolation: 0

@@ -52,10 +52,8 @@ Shader "CustomEffects/Volumetrics"
     float outScatter;
     float scatterLerp;
 
-    float xOffset;
-    float zOffset;
-    float detailXOffset;
-    float detailZOffset;
+    float2 shapeOffset;
+    float2 detailOffset;
 
     float atmosphericBlending;
     
@@ -97,9 +95,9 @@ Shader "CustomEffects/Volumetrics"
             R(localCoordinates.z, -1, 1, 0, 1));
         
         float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat,
-            (position.xyz + float3(xOffset, 0, zOffset)) * scale, 0);
+            (position.xyz + float3(shapeOffset.x, 0, shapeOffset.y)) * scale, 0);
         float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat,
-            (position.xyz + float3(detailXOffset, 0, detailZOffset)) * detailScale, 0);
+            (position.xyz + float3(detailOffset.x, 0, detailOffset.y)) * detailScale, 0);
         float4 weatherMapSample = SAMPLE_TEXTURE2D_LOD(weatherMap, sampler_LinearRepeat, localCoordinates.xz, 0);
         
         float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
@@ -142,13 +140,13 @@ Shader "CustomEffects/Volumetrics"
         float radiance = 0;
         float distanceFade = 0;
     
-        float highDetailStepSize = 1.0f;
-        float lowDetailStepSize = 3.0f;
+        float highDetailStepSize = 0.3f;
+        float lowDetailStepSize = 1.0f;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
 
-        float blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_TrilinearRepeat, input.texcoord.xy * 1.1f);
+        float blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_TrilinearRepeat, input.texcoord.xy * 4.0f);
         float distanceTravelled = 0;
 
         for (int i = 0; i < numVolumes; i++)
@@ -160,11 +158,12 @@ Shader "CustomEffects/Volumetrics"
             float3 boundsMax = boundsOrigin + boundsExtents/2.0f;
             
             float2 intersectData = RayBoxIntersect(boundsMin, boundsMax, camPos, viewVector);
-            float lightingStepSize = 1.0f;
+            float lightingStepSize = 2.0f;
 
             float distanceLimit = min(depth - intersectData.x, intersectData.y);
 
-            camPos += viewVector * ((blueNoiseOffset - 0.5f) * 2 * stepSize);
+            camPos += viewVector * (blueNoiseOffset * stepSize * 10);
+            int stepsTaken = 0;
             
             [loop]
             while (distanceTravelled < distanceLimit)
@@ -178,6 +177,7 @@ Shader "CustomEffects/Volumetrics"
                 
                 float densityAtPoint = SampleDensity(rayPosition, boundsOrigin, boundsExtents) * stepSize;
                 distanceTravelled += stepSize;
+                stepsTaken++;
                 if(stepSize == highDetailStepSize)
                     highDetailDistanceTravelled += highDetailStepSize;
                 
@@ -204,6 +204,10 @@ Shader "CustomEffects/Volumetrics"
                 float3 lightDirection = normalize(_MainLightPosition.xyz);
 
                 float toSunDensity = 0.0f;
+                
+                // blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_TrilinearRepeat, (input.texcoord.xy +
+                //     int2(stepsTaken, stepsTaken)) * 4.0f);
+                // rayPosition += lightDirection * (blueNoiseOffset * 10 * stepSize);
                 for (int v = 0; v < sunSteps; v++)
                 {
                     rayPosition += lightDirection * lightingStepSize;
@@ -224,7 +228,7 @@ Shader "CustomEffects/Volumetrics"
                 float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, inScatter), sunLocalIntensity),
                     HenyeyGreenstein(dotAngle, -outScatter), scatterLerp);
                 
-                radiance += densityAtPoint * transmittance * outScattering * shadow * anisotropicScattering;
+                radiance += densityAtPoint * transmittance * outScattering * shadow;
                 transmittance *= exp(-densityAtPoint * absorption);
 
                 if(radiance >= 1.0f)
@@ -241,7 +245,7 @@ Shader "CustomEffects/Volumetrics"
         attenuatedTransmittance = Smootherstep01(attenuatedTransmittance);
         
         return SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord.xy) * (1 - attenuatedTransmittance) +
-          attenuatedTransmittance * _MainLightColor * radiance + ambient * (1 - radiance);
+         attenuatedTransmittance * _MainLightColor * radiance + ambient * (1 - radiance);
     }
     
     ENDHLSL

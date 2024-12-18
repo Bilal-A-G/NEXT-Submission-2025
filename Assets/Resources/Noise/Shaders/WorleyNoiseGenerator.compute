@@ -4,13 +4,11 @@
 RWTexture3D<float4> output;
 StructuredBuffer<float3> points;
 
-int3 tiles;
+int tiles;
 int tileSize;
 
 float4 channel;
 float contribution;
-
-int3 imageDimensions;
 
 [numthreads(1, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -23,20 +21,20 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     
     for (int i = -1; i <= 1; i++)
     {
-        uint xIndex = (uint)(tileIndexX + i + tiles.x) % tiles.x;
-        float xOffset = ((float)(tileIndexX + i)/(float)tiles.x - (float)xIndex/(float)tiles.x) * tiles.x;
+        uint xIndex = (uint)(tileIndexX + i + tiles) % tiles;
+        float xOffset = ((float)(tileIndexX + i)/(float)tiles - (float)xIndex/(float)tiles) * tiles;
 
         for (int j = -1; j <= 1; j++)
         {
-            uint yIndex = (uint)(tileIndexY + j + tiles.y) % tiles.y;
-            float yOffset = ((float)(tileIndexY + j)/(float)tiles.y - (float)yIndex/(float)tiles.y) * tiles.y;
+            uint yIndex = (uint)(tileIndexY + j + tiles) % tiles;
+            float yOffset = ((float)(tileIndexY + j)/(float)tiles - (float)yIndex/(float)tiles) * tiles;
 
             for (int k = -1; k <= 1; k++)
             {
-                uint zIndex = (uint)(tileIndexZ + k + tiles.z) % tiles.z;
-                float zOffset = ((float)(tileIndexZ + k)/(float)tiles.z - (float)zIndex/(float)tiles.z) * tiles.z;
+                uint zIndex = (uint)(tileIndexZ + k + tiles) % tiles;
+                float zOffset = ((float)(tileIndexZ + k)/(float)tiles - (float)zIndex/(float)tiles) * tiles;
                 
-                int flattenedIndex = zIndex * tiles.x * tiles.y + yIndex * tiles.x + xIndex;
+                int flattenedIndex = zIndex * tiles * tiles + yIndex * tiles + xIndex;
 
                 float3 currentPoint = points[flattenedIndex] + float3(xOffset, yOffset, zOffset) * tileSize;
 
