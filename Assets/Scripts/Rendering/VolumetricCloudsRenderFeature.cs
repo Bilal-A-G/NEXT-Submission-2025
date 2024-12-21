@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using Volumetrics;
@@ -23,7 +24,10 @@ namespace Rendering
     {
         [SerializeField] private VolumetricCloudSettingsSo profile;
         private VolumetricCloudsRenderPass _cloudsRenderPass;
-        
+        private int _frameCount;
+        private int _frameCountLastFrame;
+        private const int TextureRefreshRate = 16;
+
         public override void Create()
         {
             if(!Application.isPlaying)
@@ -47,10 +51,19 @@ namespace Rendering
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if(_cloudsRenderPass == null)
+            if(_cloudsRenderPass == null || !Application.isPlaying)
                 return;
             
+            _frameCount += Time.frameCount - _frameCountLastFrame;
+            _frameCount %= TextureRefreshRate;
+            int framesElapsed = Mathf.Abs(_frameCountLastFrame - _frameCount) > 0 ? 1 : 0;
+
+            _cloudsRenderPass.frameCounter = _frameCount;
+            _cloudsRenderPass.framesElapsed = framesElapsed;
+            _cloudsRenderPass.ConfigureInput(ScriptableRenderPassInput.Motion);
             renderer.EnqueuePass(_cloudsRenderPass);
+            
+            _frameCountLastFrame = _frameCount;
         }
     }
 }

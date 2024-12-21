@@ -11,6 +11,9 @@ namespace Volumetrics.Settings
         public ComputeShader RayMarcher => Resources.Load<ComputeShader>("VolumetricClouds/Shaders/RayMarcher");
         public Texture2D BlueNoise => Resources.Load<Texture2D>("Noise/Textures/BlueNoise");
 
+        public ComputeShader TemporalReprojector => 
+            Resources.Load<ComputeShader>("VolumetricClouds/Shaders/TemporalReprojector");
+
         [Header("Global")]
         public Texture2D weatherMap;
         public float globalDensity;

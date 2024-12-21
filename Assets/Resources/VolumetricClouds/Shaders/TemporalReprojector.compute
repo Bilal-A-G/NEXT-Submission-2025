@@ -1,0 +1,60 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> finalAccumulation;
+RWTexture2D<float2> accumulatedMotionVectors;
+
+Texture2D<float2> motionVectors;
+SamplerState sampler_motionVectors;
+
+Texture2D<float4> accumulation;
+SamplerState sampler_accumulation;
+
+float2 textureSize;
+int frameOffset;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    const uint blockSize = 4;
+    int2 pixelOffset = int2(0, 0);
+    uint blockIndex = frameOffset/blockSize;
+        
+    uint xStarts[] = {0, 1, 1, 0};
+    uint startingXIndex = xStarts[blockIndex];
+    uint startingYIndex = blockIndex % 2;
+
+    uint currentPixelIndex = frameOffset - blockSize * blockIndex;
+    pixelOffset.x = startingXIndex + xStarts[currentPixelIndex] * 2;
+    pixelOffset.y = startingYIndex + currentPixelIndex % 2 * 2;
+    
+    int2 imageIndex = id.xy * blockIndex + pixelOffset;
+    float2 imageUV = float2(id.x / textureSize.x, id.y / textureSize.y);
+    
+    float2 motionVector = motionVectors.SampleLevel(sampler_motionVectors, imageUV, 0);
+    if(length(motionVector) >= 1.0f)
+        motionVector = normalize(motionVector);
+    
+    int2 offsetSamplePoint = id.xy - motionVector * textureSize;
+    float4 knownSample = finalAccumulation[imageIndex];
+
+    if (offsetSamplePoint.x > textureSize.x || offsetSamplePoint.x < 0.0f || offsetSamplePoint.y > textureSize.y || offsetSamplePoint.y < 0.0f)
+    {
+         finalAccumulation[id.xy] = finalAccumulation[imageUV];
+         return;
+    }
+    
+    float4 offsetAccumulationSample = finalAccumulation[offsetSamplePoint];
+    float4 col;
+
+    //If the pixel has been computed correctly for this frame
+    if((int)(imageUV.x * textureSize.x) == imageIndex.x && (int)(imageUV.y * textureSize.y) == imageIndex.y)
+    {
+        col = knownSample;
+    }
+    else
+    {
+        col = offsetAccumulationSample;
+    }
+    
+    finalAccumulation[id.xy] = lerp(finalAccumulation[id.xy], col, 0.9f);
+}
