@@ -20,6 +20,10 @@ namespace Volumetrics
         private RTHandle _cloudDepthMap;
         private RTHandle _cloudTransmittanceMap;
 
+        private RTHandle _cloudDoubleBufferFront;
+        private RTHandle _cloudDoubleBufferBack;
+        private RTHandle _cloudQuarterResAccumulationMap;
+
         private RenderTextureDescriptor _renderTextureDescriptor;
         
         public static VolumetricCloudsResourceManager GetInstance() => _instance;
@@ -45,6 +49,43 @@ namespace Volumetrics
         public void CreateCompositeMaterial(Shader shader)
         {
             _compositeMaterial = new Material(shader);
+        }
+
+        public RTHandle GetQuarterResAccumulationMap(Vector2 screenSize)
+        {
+            int sizeX = (int)screenSize.x / 4; 
+            int sizeY = (int)screenSize.y / 4;
+            
+            RenderTextureDescriptor quarterResDescriptor = _renderTextureDescriptor;
+            quarterResDescriptor.width = sizeX;
+            quarterResDescriptor.height = sizeY;
+            
+            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudQuarterResAccumulationMap, quarterResDescriptor);
+            return _cloudQuarterResAccumulationMap;
+        }
+
+        public RTHandle GetCloudFrontBuffer(Vector2 screenSize)
+        {
+            int sizeX = (int)screenSize.x;
+            int sizeY = (int)screenSize.y;
+
+            _renderTextureDescriptor.width = sizeX;
+            _renderTextureDescriptor.height = sizeY;
+            
+            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudDoubleBufferFront, _renderTextureDescriptor);
+            return _cloudDoubleBufferFront;
+        }
+        
+        public RTHandle GetCloudBackBuffer(Vector2 screenSize)
+        {
+            int sizeX = (int)screenSize.x;
+            int sizeY = (int)screenSize.y;
+
+            _renderTextureDescriptor.width = sizeX;
+            _renderTextureDescriptor.height = sizeY;
+            
+            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudDoubleBufferBack, _renderTextureDescriptor);
+            return _cloudDoubleBufferBack;
         }
 
         public RTHandle GetCloudAccumulation(Vector2 screenSize)

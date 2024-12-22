@@ -7,10 +7,12 @@ Shader "CustomEffects/Volumetrics"
     #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
     
     Texture2D<float4> cloudAccumulation;
+    SamplerState sampler_cloudAccumulation;
     
     float4 Composite(Varyings input) : SV_Target
     {
-        return SAMPLE_TEXTURE2D(cloudAccumulation, sampler_LinearClamp, input.texcoord.xy);
+        float4 currentFrameContrib = SAMPLE_TEXTURE2D(cloudAccumulation, sampler_cloudAccumulation, input.texcoord.xy);
+        return currentFrameContrib;
     }
     
     ENDHLSL

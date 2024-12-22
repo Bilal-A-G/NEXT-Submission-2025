@@ -28,7 +28,7 @@ RWTexture2D<float4> input;
 RWTexture2D<float> cloudDepthMap;
 RWTexture2D<float4> transmittanceMap;
 
-int frameOffset;
+float2 jitterIndex;
 
 Texture2D<float4> weatherMap;
 SamplerState sampler_weatherMap;
@@ -111,22 +111,8 @@ float SampleDensity(float3 position, float3 boundsOrigin, float3 boundsExtents)
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    //Updates pixels in a cross-wise order, following the paper by Haggstrom
-    const uint blockSize = 4;
+    float2 imageUV = (id.xy * 4) / imageSize.xy;
     
-    int2 pixelOffset = int2(0, 0);
-    uint blockIndex = frameOffset/blockSize;
-    
-    uint xStarts[] = {0, 1, 1, 0};
-    uint startingXIndex = xStarts[blockIndex];
-    uint startingYIndex = blockIndex % 2;
-
-    uint currentPixelIndex = frameOffset - blockSize * blockIndex;
-    pixelOffset.x = startingXIndex + xStarts[currentPixelIndex] * 2;
-    pixelOffset.y = startingYIndex + currentPixelIndex % 2 * 2;
-    
-    int2 imageIndex = id.xy * blockSize + pixelOffset;
-    float2 imageUV = float2(imageIndex.x / imageSize.x, imageIndex.y / imageSize.y);
     float3 viewVector = mul(unityCameraInverseProjection, float4(imageUV.xy * 2.0f - 1.0f, 0.0f, -1.0f)).xyz;
     viewVector = mul(unityCameraToWorld, float4(viewVector.x, viewVector.y, -viewVector.z, 0.0f)).xyz;
 
@@ -242,7 +228,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     attenuatedTransmittance = smoothstep(0, 1, attenuatedTransmittance);
     distanceFade/= distanceLimit;
     
-    transmittanceMap[imageIndex.xy] = float4(imageUV.xy, 0, 0); //attenuatedTransmittance;
-    cloudDepthMap[imageIndex.xy] = atmosphereFadeDistance;
-    input[imageIndex.xy] = attenuatedTransmittance * mainLightColour * radiance + ambient * (1 - radiance);
+    transmittanceMap[id.xy] = float4(imageUV.xy, 0, 0); //attenuatedTransmittance;
+    cloudDepthMap[id.xy] = atmosphereFadeDistance;
+    input[id.xy] = attenuatedTransmittance * mainLightColour * radiance + ambient * (1 - radiance);
 }
