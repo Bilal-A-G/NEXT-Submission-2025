@@ -13,11 +13,21 @@ MonoBehaviour:
   m_Name: Custom
   m_EditorClassIdentifier: 
   weatherMap: {fileID: 2800000, guid: 5b58a06207b3e7d4bb38b41c68598d9b, type: 3}
+<<<<<<< Updated upstream
   globalDensity: 20
   globalCoverage: 0.589
   shapeNoiseUVScale: 0.003
   detailNoiseUVScale: 0.08
   shapeNoiseUVOffset: {x: 0, y: 0}
+=======
+  globalDensity: 26.4
+  cloudStartHeight: 16.3
+  cloudEndHeight: 200
+  globalCoverage: 0.586
+  shapeNoiseUVScale: 0.003
+  detailNoiseUVScale: 0.1
+  shapeNoiseUVOffset: {x: 67, y: 0}
+>>>>>>> Stashed changes
   detailNoiseUVOffset: {x: 0, y: 0}
   shapeNoise:
     powTwoExponentTextureSize: 7
@@ -67,8 +77,13 @@ MonoBehaviour:
       type: 0
       contribution: 1
     textureOutput: {fileID: 0}
+<<<<<<< Updated upstream
   absorption: 3
   atmosphereBlending: 100
+=======
+  absorption: 2
+  atmosphereBlending: 29.79
+>>>>>>> Stashed changes
   sunExtraIntensity: 1
   sunExtraIntensityLocalization: 1
   minimumShadowing: 0.192

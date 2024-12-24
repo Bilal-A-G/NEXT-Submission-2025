@@ -1,0 +1,27 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> currentFrameAccumulation;
+RWTexture2D<float4> prevFrameAccumulation;
+
+Texture2D<float4> quarterResAccumulation;
+SamplerState sampler_quarterResAccumulation;
+
+float2 textureSize;
+float2 jitterOffset;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / textureSize;
+    float4 quarterResColour = quarterResAccumulation.SampleLevel(sampler_quarterResAccumulation, uv, 0);
+    float4 currentColour = currentFrameAccumulation[id.xy];
+    float4 previousColour = prevFrameAccumulation[id.xy];
+
+    //If our pixel has been rendered, then pass it, else pass through the previous colour
+    float2 blockCoordinates = floor(fmod(uv * textureSize, 4.0f));
+    blockCoordinates = abs(blockCoordinates - jitterOffset);
+    float jitterCorrection = saturate(blockCoordinates.x + blockCoordinates.y);
+
+    currentFrameAccumulation[id.xy] =
+        lerp(quarterResColour, currentColour, jitterCorrection);
+}
