@@ -1,29 +1,6 @@
 #pragma kernel CSMain
 #include "Math.hlsl"
 
-struct Bounds
-{
-    float3 origin;
-    float3 extents;
-};
-
-float2 RayBoxIntersect(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 rayDirection)
-{
-    float3 t0 = (boundsMin - rayOrigin)/rayDirection;
-    float3 t1 = (boundsMax - rayOrigin)/rayDirection;
-
-    float3 tMin = min(t0, t1);
-    float3 tMax = max(t0, t1);
-
-    float dstA = max(max(tMin.x, tMin.y), tMin.z); 
-    float dstB = min(tMax.x, min(tMax.y, tMax.z));
-
-    float dstToBox = max(0, dstA);
-    float dstInsideBox = max(0, dstB - dstToBox);
-
-    return float2(dstToBox, dstInsideBox);
-}
-
 RWTexture2D<float4> input;
 RWTexture2D<float> cloudDepthMap;
 RWTexture2D<float4> transmittanceMap;
@@ -61,8 +38,10 @@ float2 shapeOffset;
 float2 detailOffset;
 
 float atmosphericBlending;
-RWStructuredBuffer<Bounds> volumeBounds;
 float2 imageSize;
+
+float cloudStart;
+float cloudEnd;
 
 //Unity stuff
 float3 startingCameraPosition;
@@ -72,21 +51,15 @@ float4 ambient;
 float4x4 unityCameraInverseProjection;
 float4x4 unityCameraToWorld;
 
-float SampleDensity(float3 position, float3 boundsOrigin, float3 boundsExtents)
+float SampleDensity(float3 position, float percentHeight)
 {
-    float3 localCoordinates = (position.xyz - boundsOrigin)/boundsExtents * 2;
-    localCoordinates = float3(
-        Remap(localCoordinates.x, -1, 1, 0, 1),
-        Remap(localCoordinates.y, -1, 1, 0, 1),
-        Remap(localCoordinates.z, -1, 1, 0, 1));
-
     float4 noiseSample = shapeNoise.SampleLevel(sampler_shapeNoise,
         (position.xyz + float3(shapeOffset.x, 0, shapeOffset.y)) * scale, 0);
     
     float4 detailSample = detailNoise.SampleLevel(sampler_detailNoise,
         (position.xyz + float3(detailOffset.x, 0, detailOffset.y)) * detailScale, 0);
     
-    float4 weatherMapSample = weatherMap.SampleLevel(sampler_weatherMap, localCoordinates.xz, 0);
+    //float4 weatherMapSample = weatherMap.SampleLevel(sampler_weatherMap, localCoordinates.xz, 0);
         
     float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
     float finalShape = Remap(noiseSample.x, fbm - 1, 1, 0, 1);
@@ -94,13 +67,13 @@ float SampleDensity(float3 position, float3 boundsOrigin, float3 boundsExtents)
     float detailFBM = detailSample.x * 0.625f + detailSample.y * 0.25f + detailSample.z * 0.125f;
 
     float detailNoiseModification = 0.35f * exp(-threshold * 0.75f) * lerp(detailFBM, 1 - detailFBM,
-        clamp(localCoordinates.y * 5.0f, 0, 1));
+        clamp(percentHeight * 5.0f, 0, 1));
         
-    float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
-    float shapeAltering = ShapeAlteringHeight(localCoordinates.y, 1.0f);
-    float densityAltering = DensityAlteringHeight(localCoordinates.y, weatherMapSample.w, density);
+    //float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
+    float shapeAltering = ShapeAlteringHeight(percentHeight, 1.0f);
+    float densityAltering = DensityAlteringHeight(percentHeight, 1.0f, density);
         
-    float finalSample = clamp(Remap(finalShape * shapeAltering, 1 - threshold * cloudProbability,
+    float finalSample = clamp(Remap(finalShape * shapeAltering, 1 - threshold,
         1, 0, 1), 0, 1);
     float finalDensity = clamp(Remap(finalSample, detailNoiseModification,
         1, 0, 1), 0, 1) * densityAltering;
@@ -112,13 +85,8 @@ float SampleDensity(float3 position, float3 boundsOrigin, float3 boundsExtents)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float2 imageUV = (id.xy * 4) / imageSize.xy;
-    
     float3 viewVector = mul(unityCameraInverseProjection, float4(imageUV.xy * 2.0f - 1.0f, 0.0f, -1.0f)).xyz;
     viewVector = mul(unityCameraToWorld, float4(viewVector.x, viewVector.y, -viewVector.z, 0.0f)).xyz;
-
-    uint numVolumes;
-    uint _;
-    volumeBounds.GetDimensions(numVolumes, _);
 
     int sunSteps = 3;
         
@@ -138,89 +106,93 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float3 cameraPosition = startingCameraPosition;
     int stepsTaken = 0;
-    float distanceLimit = 200.0f;
+    float distanceLimit = cloudEnd - cloudStart;
+    float lightingStepSize = 2.0f;
 
-    for (uint i = 0; i < numVolumes; i++)
+    float rayMidpointIntersect = dot(normalize(float3(0,0,4) - cameraPosition), viewVector);
+    float rayMidpointSphereCenterDistance = length(float3(0,0,4) - (cameraPosition + viewVector * rayMidpointIntersect));
+    float rayDstToEdge = sqrt(pow(cloudStart, 2) - pow(rayMidpointSphereCenterDistance, 2));
+    
+    float raySphereIntersect = length(cameraPosition) < cloudStart ?
+        rayMidpointIntersect + rayDstToEdge : rayMidpointIntersect - rayDstToEdge;
+
+    input[id.xy] = float4(rayMidpointSphereCenterDistance,rayMidpointSphereCenterDistance,rayMidpointSphereCenterDistance,0)/50.0f;
+    
+    // if(rayDstToEdge > cloudStart)
+    // {
+    //     input[id.xy] = float4(0,0,0,0);
+    // }
+    // else
+    // {
+    //     input[id.xy] = float4(1, 0, 0, 0);
+    // }
+    return;
+
+    cameraPosition += viewVector * (blueNoiseOffset * stepSize * 2).xyz;
+    while (distanceTravelled < distanceLimit)
     {
-        float3 boundsOrigin = volumeBounds[i].origin;
-        float3 boundsExtents = volumeBounds[i].extents;
-            
-        float3 boundsMin = boundsOrigin - boundsExtents/2.0f;
-        float3 boundsMax = boundsOrigin + boundsExtents/2.0f;
-            
-        float2 intersectData = RayBoxIntersect(boundsMin, boundsMax, cameraPosition, viewVector);
-        float lightingStepSize = 2.0f;
+        float3 rayPosition = cameraPosition + viewVector * (distanceTravelled);
+        float percentHeight = (rayPosition.y - cloudStart) / cloudEnd;
+        float densityAtPoint = SampleDensity(rayPosition, percentHeight) * stepSize;
 
-        cameraPosition += viewVector * (blueNoiseOffset * stepSize * 2).xyz;
-        while (distanceTravelled < distanceLimit)
+        distanceFade += length(cameraPosition - rayPosition) * transmittance;
+        stepsTaken++;
+            
+        distanceTravelled += stepSize;
+        if(stepSize == highDetailStepSize)
+            highDetailDistanceTravelled += highDetailStepSize;
+                
+        if(densityAtPoint > 0.0f &&
+            stepSize == lowDetailStepSize)
         {
-            float3 rayPosition = cameraPosition + viewVector * (distanceTravelled + intersectData.x);
-            float3 localCoordinates = (rayPosition.xyz - boundsOrigin)/boundsExtents * 2;
-            localCoordinates = float3(
-                Remap(localCoordinates.x, -1, 1, 0, 1),
-                Remap(localCoordinates.y, -1, 1, 0, 1),
-                Remap(localCoordinates.z, -1, 1, 0, 1));
+            distanceTravelled -= stepSize * 2;
+            stepSize = highDetailStepSize;
+            highDetailDistanceTravelled = 0.0f;
+            if(atmosphereFadeDistance == 0)
+                atmosphereFadeDistance = length(startingCameraPosition - rayPosition);
+            continue;
+        }
+        if (densityAtPoint <= 0.0f && highDetailDistanceTravelled > highDetailStepSize * 10.0f &&
+            stepSize == highDetailStepSize)
+        {
+            stepSize = lowDetailStepSize;
+            continue;
+        }
+
+        if(densityAtPoint <= 0)
+            continue;
             
-            float densityAtPoint = SampleDensity(rayPosition, boundsOrigin, boundsExtents) * stepSize;
+        float toSunDensity = 0.0f;
+        for (int v = 0; v < sunSteps; v++)
+        {
+            rayPosition += mainLightDirection * lightingStepSize;
+            float toSunPercentHeight = rayPosition.y / 500.0f;
+            toSunDensity += SampleDensity(rayPosition, toSunPercentHeight) * lightingStepSize;
 
-            distanceFade += length(cameraPosition - rayPosition) * transmittance;
-            stepsTaken++;
-            
-            distanceTravelled += stepSize;
-            if(stepSize == highDetailStepSize)
-                highDetailDistanceTravelled += highDetailStepSize;
-                
-            if(densityAtPoint > 0.0f &&
-                stepSize == lowDetailStepSize)
-            {
-                distanceTravelled -= stepSize * 2;
-                stepSize = highDetailStepSize;
-                highDetailDistanceTravelled = 0.0f;
-                if(atmosphereFadeDistance == 0)
-                    atmosphereFadeDistance = length(startingCameraPosition - rayPosition);
-                continue;
-            }
-            if (densityAtPoint <= 0.0f && highDetailDistanceTravelled > highDetailStepSize * 10.0f &&
-                stepSize == highDetailStepSize)
-            {
-                stepSize = lowDetailStepSize;
-                continue;
-            }
-
-            if(densityAtPoint <= 0)
-                continue;
-            
-            float toSunDensity = 0.0f;
-            for (int v = 0; v < sunSteps; v++)
-            {
-                rayPosition += mainLightDirection * lightingStepSize;
-                toSunDensity += SampleDensity(rayPosition, boundsOrigin, boundsExtents) * lightingStepSize;
-
-                if(toSunDensity >= 1.0f)
-                    break;
-            }
-            
-            float shadow = clamp(exp(-toSunDensity), attenuationClamp, 1.0f);
-            shadow = max(toSunDensity * minimumAttenuationAmbient, shadow);
-            float outScattering = 1 - saturate(outScatteringAmbient * 2 *
-                pow(abs(densityAtPoint * (1 - transmittance)),
-                    Remap(localCoordinates.y, 0.3f, 0.9f, 0.5, 1.0f))) *
-                    saturate(pow(abs(Remap(localCoordinates.y, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
-
-            float dotAngle = dot(mainLightDirection, normalize(rayPosition - cameraPosition));
-            float sunLocalIntensity = sunIntensity * pow(clamp(dotAngle, 0, 1), sunIntensityRadius);
-            float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, inScatter), sunLocalIntensity),
-                HenyeyGreenstein(dotAngle, -outScatter), scatterLerp);
-                
-            radiance += densityAtPoint * transmittance * outScattering * shadow;
-            transmittance *= exp(-densityAtPoint * absorption);
-
-            if(radiance >= 1.0f)
-                break;
-                
-            if(transmittance <= 0.01f)
+            if(toSunDensity >= 1.0f)
                 break;
         }
+            
+        float shadow = clamp(exp(-toSunDensity), attenuationClamp, 1.0f);
+        shadow = max(toSunDensity * minimumAttenuationAmbient, shadow);
+        float outScattering = 1 - saturate(outScatteringAmbient * 2 *
+                pow(abs(densityAtPoint * (1 - transmittance)),
+                    Remap(percentHeight, 0.3f, 0.9f, 0.5, 1.0f))) *
+            saturate(pow(abs(Remap(percentHeight, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
+
+        float dotAngle = dot(mainLightDirection, normalize(rayPosition - cameraPosition));
+        float sunLocalIntensity = sunIntensity * pow(clamp(dotAngle, 0, 1), sunIntensityRadius);
+        float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, inScatter), sunLocalIntensity),
+                                           HenyeyGreenstein(dotAngle, -outScatter), scatterLerp);
+                
+        radiance += densityAtPoint * transmittance * outScattering * shadow;
+        transmittance *= exp(-densityAtPoint * absorption);
+
+        if(radiance >= 1.0f)
+            break;
+                
+        if(transmittance <= 0.01f)
+            break;
     }
 
     float attenuatedTransmittance = clamp(exp(-atmosphereFadeDistance / (atmosphericBlending * 100.0f)) *

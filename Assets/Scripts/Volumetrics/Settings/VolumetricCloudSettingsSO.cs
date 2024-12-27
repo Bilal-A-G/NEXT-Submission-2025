@@ -17,6 +17,8 @@ namespace Volumetrics.Settings
         [Header("Global")]
         public Texture2D weatherMap;
         public float globalDensity;
+        public float cloudStart;
+        public float cloudEnd;
         [Range(0, 1)] public float globalCoverage;
         
         [Space(25.0f)]

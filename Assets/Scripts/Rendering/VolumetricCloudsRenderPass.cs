@@ -28,8 +28,6 @@ namespace Rendering
     
     public class VolumetricCloudsRenderPass : ScriptableRenderPass
     {
-        private VolumeDefinition[] _allVolumes;
-
         private VolumetricCloudSettingsSo _settings;
         public int frameCounter = 0;
         public int framesElapsed = 0;
@@ -68,24 +66,11 @@ namespace Rendering
                 Screen.height, RenderTextureFormat.Default, 0);
 
             _textureDescriptor.enableRandomWrite = true;
-            _allVolumes = Object.FindObjectsByType<VolumeDefinition>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             _settings = settings;
         }
 
         private void UpdateSettings(UniversalCameraData cameraData, ComputeGraphContext context, PassData data)
         {
-            VolumeBounds[] allBounds = new VolumeBounds[_allVolumes.Length];
-            for (int i = 0; i < _allVolumes.Length; i++)
-            {
-                Transform currentTransform = _allVolumes[i].transform;
-                allBounds[i] = new VolumeBounds(currentTransform.position, currentTransform.localScale);
-            }
-
-            ComputeBuffer allBoundsBuffer = VolumetricCloudsResourceManager.GetInstance().GetAllBounds();
-            allBoundsBuffer.SetData(allBounds);
-            context.cmd.SetComputeBufferParam(_settings.RayMarcher, 0, 
-                Shader.PropertyToID("volumeBounds"), allBoundsBuffer);
-
             context.cmd.SetComputeTextureParam(_settings.RayMarcher, 0, 
                 Shader.PropertyToID("input"), data.CloudAccumulationBuffer);
             _settings.RayMarcher.SetTexture(0, 
@@ -148,6 +133,11 @@ namespace Rendering
                 _settings.outScattering);
             context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("scatterLerp"), 
                 _settings.inToOutScatteringInterpolation);
+            
+            context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("cloudStart"), 
+                _settings.cloudStart);            
+            context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("cloudEnd"), 
+                _settings.cloudEnd);
             
             context.cmd.SetComputeVectorParam(_settings.RayMarcher, Shader.PropertyToID("shapeOffset"), 
                 _settings.shapeNoiseUVOffset);
@@ -227,24 +217,24 @@ namespace Rendering
             cloudQuarterResAccumulationMap.rt.filterMode = FilterMode.Trilinear;
             cloudQuarterResAccumulationMap.rt.wrapMode = TextureWrapMode.Clamp;
 
-            using (IComputeRenderGraphBuilder builder =
-                   renderGraph.AddComputePass("TemporalAccumulation", out TemporalPassData passData))
-            {
-                passData.CurrentFrameAccumulationBuffer = cloudFrontBufferHandle;
-                passData.QuarterResAccumulationBuffer = cloudQuarterResAccumulationMapHandle;
-                passData.RenderTargetDimensions = renderTargetDimensions;
-            
-                builder.UseTexture(passData.CurrentFrameAccumulationBuffer, AccessFlags.ReadWrite);
-                builder.UseTexture(passData.QuarterResAccumulationBuffer, AccessFlags.Read);
-                builder.SetRenderFunc((TemporalPassData data, ComputeGraphContext context) =>
-                    ExecuteTemporalReProjection(data, context));
-            }      
-
+            // using (IComputeRenderGraphBuilder builder =
+            //        renderGraph.AddComputePass("TemporalAccumulation", out TemporalPassData passData))
+            // {
+            //     passData.CurrentFrameAccumulationBuffer = cloudFrontBufferHandle;
+            //     passData.QuarterResAccumulationBuffer = cloudQuarterResAccumulationMapHandle;
+            //     passData.RenderTargetDimensions = renderTargetDimensions;
+            //
+            //     builder.UseTexture(passData.CurrentFrameAccumulationBuffer, AccessFlags.ReadWrite);
+            //     builder.UseTexture(passData.QuarterResAccumulationBuffer, AccessFlags.Read);
+            //     builder.SetRenderFunc((TemporalPassData data, ComputeGraphContext context) =>
+            //         ExecuteTemporalReProjection(data, context));
+            // }      
+            //
             Material material = VolumetricCloudsResourceManager.GetInstance().GetCompositeMaterial();
             TextureHandle outputHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, _textureDescriptor,
                 "output", false);
 
-            material.SetTexture(Shader.PropertyToID("cloudAccumulation"), cloudFrontBuffer);
+            material.SetTexture(Shader.PropertyToID("cloudAccumulation"), cloudQuarterResAccumulationMap);
             material.SetTexture(Shader.PropertyToID("cloudDepth"), cloudDepthMap);
             material.SetTexture(Shader.PropertyToID("cloudTransmittance"), cloudTransmittance);
             material.SetFloat(Shader.PropertyToID("maxCloudDepth"), 200.0f);
