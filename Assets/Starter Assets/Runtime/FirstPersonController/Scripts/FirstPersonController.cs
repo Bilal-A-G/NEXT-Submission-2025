@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Cinemachine;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -20,6 +21,12 @@ namespace StarterAssets
 		public float RotationSpeed = 1.0f;
 		[Tooltip("Acceleration and deceleration")]
 		public float SpeedChangeRate = 10.0f;
+		[Tooltip("FOV when zoomed in")]
+		public float ZoomFOV = 60.0f;
+		[Tooltip("Standard FOV, when not zooming in")]
+		public float StandardFOV = 90.0f;
+		[Tooltip("How fast the camera zooms")]
+		public float ZoomSpeed;
 
 		[Space(10)]
 		[Tooltip("The height the player can jump")]
@@ -50,6 +57,8 @@ namespace StarterAssets
 		public float TopClamp = 90.0f;
 		[Tooltip("How far in degrees can you move the camera down")]
 		public float BottomClamp = -90.0f;
+		[Tooltip("The actual cinemachine camera")]
+		public CinemachineCamera CinemachineCamera;
 
 		// cinemachine
 		private float _cinemachineTargetPitch;
@@ -73,6 +82,8 @@ namespace StarterAssets
 		private GameObject _mainCamera;
 
 		private const float _threshold = 0.01f;
+		private float _targetFOV;
+		private float _currentFOV;
 
 		private bool IsCurrentDeviceMouse
 		{
@@ -93,6 +104,8 @@ namespace StarterAssets
 			{
 				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
 			}
+
+			_currentFOV = StandardFOV;
 		}
 
 		private void Start()
@@ -115,6 +128,10 @@ namespace StarterAssets
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
+
+			_targetFOV = _input.zoom ? ZoomFOV : StandardFOV;
+			_currentFOV = Mathf.Lerp(_currentFOV, _targetFOV, Time.deltaTime * ZoomSpeed);
+			CinemachineCamera.Lens.FieldOfView = _currentFOV;
 		}
 
 		private void LateUpdate()
