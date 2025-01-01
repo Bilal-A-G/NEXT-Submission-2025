@@ -154,6 +154,7 @@ GameObject:
   - component: {fileID: 7213509316816695491}
   - component: {fileID: 6031537148381593446}
   - component: {fileID: 8381379628304665516}
+  - component: {fileID: 7587094526770133446}
   m_Layer: 0
   m_Name: Sapling
   m_TagString: Untagged
@@ -230,3 +231,26 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!136 &7587094526770133446
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8021007889435208313}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10.81
+  m_Height: 332.7
+  m_Direction: 2
+  m_Center: {x: 1.45, y: 0.6, z: -159.4}
