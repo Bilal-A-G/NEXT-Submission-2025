@@ -59,6 +59,9 @@
         },
         {
             "m_Id": "586eb81b8baf443f9e9218dead7c63e4"
+        },
+        {
+            "m_Id": "12ff8d7c460544969dcfd7d91635f71b"
         }
     ],
     "m_Keywords": [],
@@ -257,6 +260,9 @@
         },
         {
             "m_Id": "7a1307d4ddbd458887061d009dc61d55"
+        },
+        {
+            "m_Id": "13c5662ff7ad4b58a72e92d65e847584"
         }
     ],
     "m_GroupDatas": [],
@@ -316,6 +322,20 @@
                     "m_Id": "4ac217c8b3274a6293f0423bbedca430"
                 },
                 "m_SlotId": 0
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "13c5662ff7ad4b58a72e92d65e847584"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "8a3d0164b1154943a04dd01544642239"
+                },
+                "m_SlotId": 178421371
             }
         },
         {
@@ -1576,6 +1596,34 @@
 }
 
 {
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector3ShaderProperty",
+    "m_ObjectId": "12ff8d7c460544969dcfd7d91635f71b",
+    "m_Guid": {
+        "m_GuidSerialized": "625b25b6-13c1-4f4e-9595-a65b425c3046"
+    },
+    "m_Name": "UpVector",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "UpVector",
+    "m_DefaultReferenceName": "_UpVector",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.BlockNode",
     "m_ObjectId": "13a59542f3f143ebb32398217a96951f",
@@ -1607,6 +1655,42 @@
         "m_SerializableColors": []
     },
     "m_SerializedDescriptor": "SurfaceDescription.Occlusion"
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "13c5662ff7ad4b58a72e92d65e847584",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -561.087158203125,
+            "y": -642.0493774414063,
+            "width": 0.0,
+            "height": 0.0
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "81e5d59f15eb4c27aab52a24a3cab74e"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": true,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "12ff8d7c460544969dcfd7d91635f71b"
+    }
 }
 
 {
@@ -4332,6 +4416,29 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "81e5d59f15eb4c27aab52a24a3cab74e",
+    "m_Id": 0,
+    "m_DisplayName": "UpVector",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.CategoryData",
     "m_ObjectId": "81ec2b0926fc45088354bae66c382b43",
     "m_Name": "Wind",
@@ -4356,6 +4463,9 @@
         },
         {
             "m_Id": "74101872110d4da2b2627d88829145da"
+        },
+        {
+            "m_Id": "12ff8d7c460544969dcfd7d91635f71b"
         }
     ]
 }
@@ -4614,6 +4724,9 @@
             "m_Id": "2f43f3e9320042e48e3725ceed0029f8"
         },
         {
+            "m_Id": "e61aac88dfa840e9aca2c4363ddfe302"
+        },
+        {
             "m_Id": "4143f6734efe4dd49dcf5097ec22c5ef"
         }
     ],
@@ -4633,7 +4746,8 @@
         "f6750732-1ec4-4eff-8d14-e71c22898238",
         "7f83dd71-5b52-4a56-adad-752bd456eab4",
         "235cc143-81f7-4d22-aede-2fe9fa555d6a",
-        "932e5b6f-b7ef-46b7-a6ae-100fee7786d5"
+        "932e5b6f-b7ef-46b7-a6ae-100fee7786d5",
+        "703a8a89-d3be-4841-af93-6fa4e3b4b696"
     ],
     "m_PropertyIds": [
         112560709,
@@ -4642,7 +4756,8 @@
         -1662024615,
         -1437958822,
         -317928480,
-        252655048
+        252655048,
+        178421371
     ],
     "m_Dropdowns": [],
     "m_DropdownSelectedEntries": []
@@ -6843,6 +6958,29 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "e61aac88dfa840e9aca2c4363ddfe302",
+    "m_Id": 178421371,
+    "m_DisplayName": "UpVector",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "_UpVector",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
     "m_Labels": []
 }
 
