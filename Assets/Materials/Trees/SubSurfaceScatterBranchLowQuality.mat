@@ -149,7 +149,7 @@ Material:
     - _SrcBlendAlpha: 1
     - _SubSurfaceDistortion: 0.8
     - _SubSurfaceFalloff: 10
-    - _SubSurfaceIntensity: 3
+    - _SubSurfaceIntensity: 0
     - _SunDistance: 300
     - _SunPunchthroughRadius: 80
     - _SunPunchthroughThreshold: 0.082
@@ -175,6 +175,7 @@ Material:
     - _SubSurfaceColour: {r: 1, g: 0.6673103, b: 0, a: 0}
     - _SubSurfaceTint: {r: 1, g: 0.7183913, b: 0, a: 0}
     - _SunPunchthroughColour: {r: 0.7433963, g: 0.70586497, b: 0.21179782, a: 0}
+    - _UpVector: {r: 0, g: 0, b: 0, a: 0}
     - _WindAxis: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
