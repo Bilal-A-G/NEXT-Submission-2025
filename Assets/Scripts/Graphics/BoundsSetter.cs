@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 
 public class BoundsSetter : MonoBehaviour
 {
-    [SerializeField] private MeshRenderer renderer;
+    [SerializeField] private new MeshRenderer renderer;
     [SerializeField] private Vector3 bounds;
     [SerializeField] private Vector3 center;
     

@@ -21,8 +21,11 @@ namespace Rendering
             if (profile == null)
                 profile = Resources.Load<VolumetricCloudSettingsSo>("VolumetricClouds/Settings/Default");
             
-            NoiseGenerator.GenerateNoise(new NoiseTextureData[] { profile.shapeNoise, profile.detailNoise });
-            VolumetricCloudsResourceManager.GetInstance().CreateCompositeMaterial(profile.Compositor);
+            NoiseGenerator.GenerateNoise(new NoiseTextureData[] { profile.shapeNoise, 
+                profile.detailNoise });
+            VolumetricCloudsResourceManager.GetInstance().CreateRayMarchMaterial(profile.RayMarcher);
+            VolumetricCloudsResourceManager.GetInstance().CreateCompositorMaterial(profile.Compositor);
+            VolumetricCloudsResourceManager.GetInstance().CreateSettingsBuffer();
             
             _cloudsRenderPass = new VolumetricCloudsRenderPass(ref profile);
             _cloudsRenderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;

@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Runtime.InteropServices;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Volumetrics.Settings;
 using Object = UnityEngine.Object;
 using Screen = UnityEngine.Device.Screen;
 
@@ -10,20 +12,14 @@ namespace Volumetrics
     public class VolumetricCloudsResourceManager : MonoBehaviour
     {
         private static VolumetricCloudsResourceManager _instance;
-        private Material _compositeMaterial;
-        private ComputeBuffer _allBounds;
+        private Material _rayMarchMaterial;
+        private Material _compositorMaterial;
 
         private RTHandleSystem _rtHandleSystem;
-        private RTHandle _cloudAccumulationMap;
-        private RTHandle _finalCloudAccumulationMap;
-        private RTHandle _accumulatedCloudMotionVectorsMap;
-        private RTHandle _cloudDepthMap;
-        private RTHandle _cloudTransmittanceMap;
-
-        private RTHandle _cloudDoubleBufferFront;
-        private RTHandle _cloudDoubleBufferBack;
         private RTHandle _cloudQuarterResAccumulationMap;
 
+        private ComputeBuffer _settingsBuffer;
+        
         private RenderTextureDescriptor _renderTextureDescriptor;
         
         public static VolumetricCloudsResourceManager GetInstance() => _instance;
@@ -46,129 +42,44 @@ namespace Volumetrics
             _renderTextureDescriptor.useDynamicScale = true;
         }
 
-        public void CreateCompositeMaterial(Shader shader)
-        {
-            _compositeMaterial = new Material(shader);
-        }
-
-        public RTHandle GetQuarterResAccumulationMap(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x / 4; 
-            int sizeY = (int)screenSize.y / 4;
-            
-            RenderTextureDescriptor quarterResDescriptor = _renderTextureDescriptor;
-            quarterResDescriptor.width = sizeX;
-            quarterResDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudQuarterResAccumulationMap, quarterResDescriptor);
-            return _cloudQuarterResAccumulationMap;
-        }
-
-        public RTHandle GetCloudFrontBuffer(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
-
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudDoubleBufferFront, _renderTextureDescriptor);
-            return _cloudDoubleBufferFront;
-        }
+        public void CreateRayMarchMaterial(Shader shader) => _rayMarchMaterial = new Material(shader);
+        public ref Material GetRayMarchMaterial() => ref _rayMarchMaterial;
         
-        public RTHandle GetCloudBackBuffer(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
+        public void CreateCompositorMaterial(Shader shader) => _compositorMaterial = new Material(shader);
+        public ref Material GetCompositorMaterial() => ref _compositorMaterial;
 
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudDoubleBufferBack, _renderTextureDescriptor);
-            return _cloudDoubleBufferBack;
-        }
+        public void CreateSettingsBuffer() => 
+            _settingsBuffer = new ComputeBuffer(1, Marshal.SizeOf<VolumetricCloudSettings>());
+        public ref ComputeBuffer GetSettingsBuffer() => ref _settingsBuffer;
 
-        public RTHandle GetCloudAccumulation(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
-
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudAccumulationMap, _renderTextureDescriptor);
-            return _cloudAccumulationMap;
-        }
-
-        public RTHandle GetFinalCloudAccumulation(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
-
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _finalCloudAccumulationMap, _renderTextureDescriptor);
-            return _finalCloudAccumulationMap;
-        }
-
-        public RTHandle GetCloudDepth(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
-
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudDepthMap, _renderTextureDescriptor);
-            return _cloudDepthMap;
-        }
         
-        public RTHandle GetCloudTransmission(Vector2 screenSize)
+        private RTHandle GetRenderTexture(Vector2 screenSize, ref RTHandle handle, Vector2Int scale)
         {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
-
+            int sizeX = (int)screenSize.x / scale.x;
+            int sizeY = (int)screenSize.y / scale.y;
+            
             _renderTextureDescriptor.width = sizeX;
             _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _cloudTransmittanceMap, _renderTextureDescriptor);
-            return _cloudTransmittanceMap;
-        }
-        
-        public RTHandle GetAccumulatedCloudMotionVectors(Vector2 screenSize)
-        {
-            int sizeX = (int)screenSize.x;
-            int sizeY = (int)screenSize.y;
 
-            _renderTextureDescriptor.width = sizeX;
-            _renderTextureDescriptor.height = sizeY;
-            
-            RenderingUtils.ReAllocateHandleIfNeeded(ref _accumulatedCloudMotionVectorsMap, _renderTextureDescriptor);
-            return _accumulatedCloudMotionVectorsMap;
+            RenderingUtils.ReAllocateHandleIfNeeded(ref handle, _renderTextureDescriptor);
+            return handle;
         }
 
-        public void CreateAllBounds(int stride, int count)
-        {
-            _allBounds?.Dispose();
-
-            _allBounds = new ComputeBuffer(count, stride);
-        }
-
-        public ref Material GetCompositeMaterial() => ref _compositeMaterial;
-        public ref ComputeBuffer GetAllBounds() => ref _allBounds;
+        public RTHandle GetQuarterResAccumulationMap(Vector2 screenSize) =>
+            GetRenderTexture(screenSize, ref _cloudQuarterResAccumulationMap, new Vector2Int(4, 4));
 
         private void OnDisable()
         {
             Debug.Log("De-allocating all resources");
             
-            if(_compositeMaterial != null)
-                Object.Destroy(_compositeMaterial);
+            if(_rayMarchMaterial != null)
+                Object.Destroy(_rayMarchMaterial);
             
-            _cloudAccumulationMap?.Release();
-            _cloudTransmittanceMap?.Release();
-            _cloudDepthMap?.Release();
-            _allBounds?.Dispose();
+            if(_compositorMaterial != null)
+                Object.Destroy(_compositorMaterial);
+            
+            _cloudQuarterResAccumulationMap?.Release();
+            _settingsBuffer?.Dispose();
             _rtHandleSystem?.Dispose();
         }
     }

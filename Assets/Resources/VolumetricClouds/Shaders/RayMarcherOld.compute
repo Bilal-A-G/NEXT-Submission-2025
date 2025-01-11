@@ -64,7 +64,7 @@ float SampleDensity(float3 position, float percentHeight)
     //float4 weatherMapSample = weatherMap.SampleLevel(sampler_weatherMap, localCoordinates.xz, 0);
         
     float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
-    float finalShape = Remap(noiseSample.x, fbm - 1, 1, 0, 1);
+    float finalShape = R(noiseSample.x, fbm - 1, 1, 0, 1);
         
     float detailFBM = detailSample.x * 0.625f + detailSample.y * 0.25f + detailSample.z * 0.125f;
 
@@ -75,9 +75,9 @@ float SampleDensity(float3 position, float percentHeight)
     float shapeAltering = ShapeAlteringHeight(percentHeight, 1.0f);
     float densityAltering = DensityAlteringHeight(percentHeight, 1.0f, density);
         
-    float finalSample = clamp(Remap(finalShape * shapeAltering, 1 - threshold,
+    float finalSample = clamp(R(finalShape * shapeAltering, 1 - threshold,
         1, 0, 1), 0, 1);
-    float finalDensity = clamp(Remap(finalSample, detailNoiseModification,
+    float finalDensity = clamp(R(finalSample, detailNoiseModification,
         1, 0, 1), 0, 1) * densityAltering;
 
     return max(finalDensity - 0.6f, 0);
@@ -162,8 +162,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         shadow = max(toSunDensity * minimumAttenuationAmbient, shadow);
         float outScattering = 1 - saturate(outScatteringAmbient * 2 *
                 pow(abs(densityAtPoint * (1 - transmittance)),
-                    Remap(percentHeight, 0.3f, 0.9f, 0.5, 1.0f))) *
-            saturate(pow(abs(Remap(percentHeight, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
+                    R(percentHeight, 0.3f, 0.9f, 0.5, 1.0f))) *
+            saturate(pow(abs(R(percentHeight, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
 
         float dotAngle = dot(mainLightDirection, normalize(rayPosition - cameraPosition));
         float sunLocalIntensity = sunIntensity * pow(clamp(dotAngle, 0, 1), sunIntensityRadius);
