@@ -18,43 +18,11 @@ namespace Rendering
         public TextureHandle CloudTransmittanceMap;
         public Vector2Int RenderTargetDimensions;
     }
-
-    public class TemporalPassData
-    {
-        public TextureHandle CurrentFrameAccumulationBuffer;
-        public TextureHandle QuarterResAccumulationBuffer;
-        public Vector2Int RenderTargetDimensions;
-    }
     
     public class VolumetricCloudsRenderPass : ScriptableRenderPass
     {
         private VolumetricCloudSettingsSo _settings;
-        public int frameCounter = 0;
-        public int framesElapsed = 0;
-        
-        private const int MaxMotionVectorStepPow2Exponent = 4;
         private const int ThreadsPerGroup = 8;
-
-        private Vector2Int[] _jitters = new Vector2Int[]
-        {
-            new Vector2Int(0,0),
-            new Vector2Int(2,2),
-            new Vector2Int(2,0),
-            new Vector2Int(0,2),
-            new Vector2Int(1,1),
-            new Vector2Int(3,3),
-            new Vector2Int(3,1),
-            new Vector2Int(1,3),
-            new Vector2Int(1, 0),
-            new Vector2Int(3,2),
-            new Vector2Int(3,0),
-            new Vector2Int(1,2),
-            new Vector2Int(0,1),
-            new Vector2Int(2,3),
-            new Vector2Int(2,1),
-            new Vector2Int(0, 3),
-        };
-        
         private RenderTextureDescriptor _textureDescriptor;
         
         public VolumetricCloudsRenderPass(ref VolumetricCloudSettingsSo settings)
@@ -77,9 +45,6 @@ namespace Rendering
                 Shader.PropertyToID("cloudDepthMap"), data.CloudDepthMap);
             _settings.RayMarcher.SetTexture(0, 
                 Shader.PropertyToID("transmittanceMap"), data.CloudTransmittanceMap);
-            
-            context.cmd.SetComputeVectorParam(_settings.RayMarcher, Shader.PropertyToID("jitterIndex"), 
-                (Vector2)_jitters[frameCounter]);
             
             _settings.BlueNoise.wrapMode = TextureWrapMode.Repeat;
             _settings.BlueNoise.filterMode = FilterMode.Bilinear;
@@ -138,6 +103,10 @@ namespace Rendering
                 _settings.cloudStart);            
             context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("cloudEnd"), 
                 _settings.cloudEnd);
+            context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("curvature"), 
+                _settings.skyCurvature);
+            context.cmd.SetComputeFloatParam(_settings.RayMarcher, Shader.PropertyToID("drawDistance"), 
+                _settings.drawDistance);
             
             context.cmd.SetComputeVectorParam(_settings.RayMarcher, Shader.PropertyToID("shapeOffset"), 
                 _settings.shapeNoiseUVOffset);
@@ -177,31 +146,14 @@ namespace Rendering
             _textureDescriptor.width = cameraTargetDescriptor.width;
             _textureDescriptor.height = cameraTargetDescriptor.height;
             
-            RTHandle cloudAccumulationBuffer = resourceManager.GetCloudAccumulation(renderTargetDimensions);
             RTHandle cloudDepthMap = resourceManager.GetCloudDepth(renderTargetDimensions);
             RTHandle cloudTransmittance = resourceManager.GetCloudTransmission(renderTargetDimensions);
-            RTHandle finalCloudAccumulationBuffer = resourceManager.GetFinalCloudAccumulation(renderTargetDimensions);
-            RTHandle cloudAccumulatedMotionVectorsMap =
-                resourceManager.GetAccumulatedCloudMotionVectors(renderTargetDimensions);
-            
-            TextureHandle cloudAccumulationBufferHandle = renderGraph.ImportTexture(cloudAccumulationBuffer);
             TextureHandle cloudDepthHandle = renderGraph.ImportTexture(cloudDepthMap);
             TextureHandle cloudTransmittanceHandle = renderGraph.ImportTexture(cloudTransmittance);
-            TextureHandle finalCloudAccumulationBufferHandle = renderGraph.ImportTexture(finalCloudAccumulationBuffer);
-            TextureHandle cloudAccumulatedMotionVectorsMapHandle =
-                renderGraph.ImportTexture(cloudAccumulatedMotionVectorsMap);
 
             RTHandle cloudQuarterResAccumulationMap = resourceManager.GetQuarterResAccumulationMap(renderTargetDimensions);
             TextureHandle cloudQuarterResAccumulationMapHandle =
                 renderGraph.ImportTexture(cloudQuarterResAccumulationMap);
-
-            //This frame's result up sampled
-            RTHandle cloudFrontBuffer = resourceManager.GetCloudFrontBuffer(renderTargetDimensions);
-            TextureHandle cloudFrontBufferHandle = renderGraph.ImportTexture(cloudFrontBuffer);
-
-            //Last frame's result, up sampled
-            RTHandle cloudBackBuffer = resourceManager.GetCloudBackBuffer(renderTargetDimensions);
-            TextureHandle cloudBackBufferHandle = renderGraph.ImportTexture(cloudBackBuffer);
             
             using (IComputeRenderGraphBuilder builder = renderGraph.AddComputePass("RayMarch", out PassData passData))
             {
@@ -216,20 +168,7 @@ namespace Rendering
             
             cloudQuarterResAccumulationMap.rt.filterMode = FilterMode.Trilinear;
             cloudQuarterResAccumulationMap.rt.wrapMode = TextureWrapMode.Clamp;
-
-            // using (IComputeRenderGraphBuilder builder =
-            //        renderGraph.AddComputePass("TemporalAccumulation", out TemporalPassData passData))
-            // {
-            //     passData.CurrentFrameAccumulationBuffer = cloudFrontBufferHandle;
-            //     passData.QuarterResAccumulationBuffer = cloudQuarterResAccumulationMapHandle;
-            //     passData.RenderTargetDimensions = renderTargetDimensions;
-            //
-            //     builder.UseTexture(passData.CurrentFrameAccumulationBuffer, AccessFlags.ReadWrite);
-            //     builder.UseTexture(passData.QuarterResAccumulationBuffer, AccessFlags.Read);
-            //     builder.SetRenderFunc((TemporalPassData data, ComputeGraphContext context) =>
-            //         ExecuteTemporalReProjection(data, context));
-            // }      
-            //
+            
             Material material = VolumetricCloudsResourceManager.GetInstance().GetCompositeMaterial();
             TextureHandle outputHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, _textureDescriptor,
                 "output", false);
@@ -257,24 +196,6 @@ namespace Rendering
                 data.RenderTargetDimensions.y)/4/ThreadsPerGroup;
             
             context.cmd.DispatchCompute(_settings.RayMarcher, 0, 
-                Mathf.CeilToInt(threadGroups.x), Mathf.CeilToInt(threadGroups.y), 1);
-        }
-
-        private void ExecuteTemporalReProjection(TemporalPassData data, ComputeGraphContext context)
-        {
-            context.cmd.SetComputeTextureParam(_settings.TemporalReprojector, 0, 
-                Shader.PropertyToID("currentFrameAccumulation"), data.CurrentFrameAccumulationBuffer);
-            context.cmd.SetComputeTextureParam(_settings.TemporalReprojector, 0, 
-                Shader.PropertyToID("quarterResAccumulation"), data.QuarterResAccumulationBuffer);
-            context.cmd.SetComputeVectorParam(_settings.TemporalReprojector, Shader.PropertyToID("textureSize"), 
-                (Vector2)data.RenderTargetDimensions);
-            
-            context.cmd.SetComputeVectorParam(_settings.TemporalReprojector, 
-                Shader.PropertyToID("jitterOffset"), (Vector2)_jitters[frameCounter]);
-            
-            Vector2 threadGroups = new Vector2(data.RenderTargetDimensions.x, 
-                data.RenderTargetDimensions.y)/ThreadsPerGroup;
-            context.cmd.DispatchCompute(_settings.TemporalReprojector, 0, 
                 Mathf.CeilToInt(threadGroups.x), Mathf.CeilToInt(threadGroups.y), 1);
         }
     }

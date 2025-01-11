@@ -42,6 +42,8 @@ float2 imageSize;
 
 float cloudStart;
 float cloudEnd;
+float curvature;
+float drawDistance;
 
 //Unity stuff
 float3 startingCameraPosition;
@@ -87,7 +89,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float2 imageUV = (id.xy * 4) / imageSize.xy;
     float3 viewVector = mul(unityCameraInverseProjection, float4(imageUV.xy * 2.0f - 1.0f, 0.0f, -1.0f)).xyz;
     viewVector = mul(unityCameraToWorld, float4(viewVector.x, viewVector.y, -viewVector.z, 0.0f)).xyz;
-
+    viewVector = normalize(viewVector);
+    
     int sunSteps = 3;
         
     float transmittance = 1;
@@ -95,44 +98,26 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float distanceFade = 0;
     float atmosphereFadeDistance = 0;
     
-    float highDetailStepSize = 0.2f;
-    float lowDetailStepSize = 1.0f;
+    float highDetailStepSize = 0.5f;
+    float lowDetailStepSize = 2.0f;
 
     float highDetailDistanceTravelled = 0.0f;
     float stepSize = lowDetailStepSize;
 
-    float4 blueNoiseOffset = float4(0,0,0,0); //blueNoise.SampleLevel(sampler_blueNoise, imageUV, 0);
+    float4 blueNoiseOffset = blueNoise.SampleLevel(sampler_blueNoise, imageUV, 0);
     float distanceTravelled = 0;
 
     float3 cameraPosition = startingCameraPosition;
     int stepsTaken = 0;
-    float distanceLimit = cloudEnd - cloudStart;
     float lightingStepSize = 2.0f;
+    float distanceLimit = cloudEnd - cloudStart;
 
-    float rayMidpointIntersect = dot(normalize(float3(0,0,4) - cameraPosition), viewVector);
-    float rayMidpointSphereCenterDistance = length(float3(0,0,4) - (cameraPosition + viewVector * rayMidpointIntersect));
-    float rayDstToEdge = sqrt(pow(cloudStart, 2) - pow(rayMidpointSphereCenterDistance, 2));
-    
-    float raySphereIntersect = length(cameraPosition) < cloudStart ?
-        rayMidpointIntersect + rayDstToEdge : rayMidpointIntersect - rayDstToEdge;
-
-    input[id.xy] = float4(rayMidpointSphereCenterDistance,rayMidpointSphereCenterDistance,rayMidpointSphereCenterDistance,0)/50.0f;
-    
-    // if(rayDstToEdge > cloudStart)
-    // {
-    //     input[id.xy] = float4(0,0,0,0);
-    // }
-    // else
-    // {
-    //     input[id.xy] = float4(1, 0, 0, 0);
-    // }
-    return;
-
-    cameraPosition += viewVector * (blueNoiseOffset * stepSize * 2).xyz;
-    while (distanceTravelled < distanceLimit)
+    cameraPosition += viewVector * cloudStart + viewVector * (blueNoiseOffset * stepSize * 2).xyz;
+    while (distanceTravelled < cloudStart + drawDistance)
     {
-        float3 rayPosition = cameraPosition + viewVector * (distanceTravelled);
-        float percentHeight = (rayPosition.y - cloudStart) / cloudEnd;
+        float3 rayPosition = cameraPosition + viewVector * distanceTravelled;
+        float percentHeight = saturate(((rayPosition.y - cloudStart) / distanceLimit) +
+            (((distanceTravelled / distanceLimit) * curvature)));
         float densityAtPoint = SampleDensity(rayPosition, percentHeight) * stepSize;
 
         distanceFade += length(cameraPosition - rayPosition) * transmittance;
