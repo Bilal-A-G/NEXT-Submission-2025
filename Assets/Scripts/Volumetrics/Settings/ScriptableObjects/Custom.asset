@@ -62,19 +62,19 @@ MonoBehaviour:
       contribution: 1
     textureOutput: {fileID: 0}
   settings:
-    globalDensity: 3.8
+    globalDensity: 42.8
     cloudStart: 500
-    cloudEnd: 560
-    skyCurvature: 1
+    cloudEnd: 700
+    skyCurvature: 0
     drawDistance: 560
-    globalCoverage: 0.91
+    globalCoverage: 0.489
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01
     shapeNoiseUVOffset: {x: 0, y: 0}
     detailNoiseUVOffset: {x: 0, y: 0}
     absorption: 2
     cloudTint: {r: 1, g: 1, b: 1, a: 1}
-    atmosphereBlending: 100
+    atmosphereBlending: 11.5
     sunExtraIntensity: 1
     sunExtraIntensityLocalization: 1
     minimumShadowing: 0.192

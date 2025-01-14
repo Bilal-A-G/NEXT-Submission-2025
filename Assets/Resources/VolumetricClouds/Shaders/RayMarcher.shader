@@ -22,13 +22,13 @@ Shader "CustomEffects/Volumetrics"
 
     float SampleDensity(float3 position, float percentHeight, VolumetricCloudSettings settings)
     {
-        float4 noiseSample = SAMPLE_TEXTURE3D(shapeNoise, sampler_TrilinearRepeat,
+        float4 noiseSample = SAMPLE_TEXTURE3D_LOD(shapeNoise, sampler_TrilinearRepeat,
             (position.xyz + float3(settings.shapeNoiseUVOffset.x, 0, settings.shapeNoiseUVOffset.y)) *
-            settings.shapeNoiseUVScale);
+            settings.shapeNoiseUVScale, 0);
         
-        float4 detailSample = SAMPLE_TEXTURE3D(detailNoise, sampler_TrilinearRepeat,
+        float4 detailSample = SAMPLE_TEXTURE3D_LOD(detailNoise, sampler_TrilinearRepeat,
             (position.xyz + float3(settings.detailNoiseUVOffset.x, 0, settings.detailNoiseUVOffset.y)) *
-            settings.detailNoiseUVScale);
+            settings.detailNoiseUVScale, 0);
         
         //float4 weatherMapSample = weatherMap.SampleLevel(sampler_weatherMap, localCoordinates.xz, 0);
             
@@ -55,14 +55,42 @@ Shader "CustomEffects/Volumetrics"
     float4 RayMarch(Varyings input) : SV_Target
     {
         VolumetricCloudSettings settings = settingsArray[0];
-        float4 originalColour = SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord);
-        
         float3 viewVector = mul(unity_CameraInvProjection, float4(input.texcoord * 2.0f - 1.0f, 0.0f, -1.0f)).xyz;
         viewVector = mul(unity_CameraToWorld, float4(viewVector.x, viewVector.y, viewVector.z, 0.0f)).xyz;
-        
-        float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, input.texcoord), _ZBufferParams);
         viewVector = normalize(viewVector);
-        float3 startingCameraPosition = _WorldSpaceCameraPos;
+
+        float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, input.texcoord), _ZBufferParams);
+        float2 cloudStartIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
+            float3(0,0,0), settings.cloudStart);
+        float2 cloudEndIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
+            float3(0,0,0), settings.cloudEnd);
+        
+        float masterIntersectionPoint;
+        //We are looking at the clouds from outside of the cloud end
+        if(cloudEndIntersection.x >= 0)
+        {
+            masterIntersectionPoint = cloudEndIntersection.x;
+        }
+        //We are looking at the clouds from the ground (inside the cloud start)
+        else if (cloudStartIntersection.y >= 0 && cloudStartIntersection.x < 0)
+        {
+            masterIntersectionPoint = cloudStartIntersection.y;
+        }
+        //We are in between the cloud start and cloud end
+        else
+        {
+            masterIntersectionPoint = 0;
+        }
+
+        //"Broad phase" culling, do not raymatch if we can't see the cloud start, or cloud end spheres, or if the
+        //scene depth is less than the distance to the cloud start sphere
+        //if we are in between the 2 spheres, then we should be able to touch the clouds, and therefore can't cull anything
+        if((cloudStartIntersection.y > depth || cloudStartIntersection.y < 0) &&
+            ((masterIntersectionPoint == cloudStartIntersection.y ?
+                cloudEndIntersection.y > depth : false)) && cloudEndIntersection.x < 0)
+        {
+            return float4(0,0,0,0);
+        }
         
         int sunSteps = 3;
         float transmittance = 1;
@@ -71,24 +99,31 @@ Shader "CustomEffects/Volumetrics"
         float atmosphereFadeDistance = 0;
         
         float highDetailStepSize = 0.5f;
-        float lowDetailStepSize = 2.0f;
+        float lowDetailStepSize = 1.0f;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
 
-        float4 blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord);
+        float4 blueNoiseOffset = float4(0,0,0,0); //SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord);
         float distanceTravelled = 0;
         int stepsTaken = 0;
         float lightingStepSize = 2.0f;
-        float distanceLimit = settings.cloudEnd - settings.cloudStart;
         
-        float3 cameraPosition = startingCameraPosition + viewVector * settings.cloudStart + viewVector * (blueNoiseOffset * stepSize * 2).xyz;
+        float distanceLimit = settings.cloudEnd - settings.cloudStart;
+        if(masterIntersectionPoint == 0 || masterIntersectionPoint == cloudEndIntersection.x)
+        {
+            distanceLimit = cloudEndIntersection.y;
+        }
+        
+        float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint) +
+            viewVector * (blueNoiseOffset * stepSize * 2).xyz;
+        distanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
+        
         [loop]
-        while (distanceTravelled < settings.cloudStart + settings.drawDistance)
+        while (distanceTravelled < distanceLimit)
         {
             float3 rayPosition = cameraPosition + viewVector * distanceTravelled;
-            float percentHeight = saturate(((rayPosition.y - settings.cloudStart) / distanceLimit) +
-                (((distanceTravelled / distanceLimit) * settings.skyCurvature)));
+            float percentHeight = R(length(rayPosition),settings.cloudStart, settings.cloudEnd, 0, 1);
             float densityAtPoint = SampleDensity(rayPosition, percentHeight, settings) * stepSize;
 
             distanceFade += length(cameraPosition - rayPosition) * transmittance;
@@ -105,7 +140,7 @@ Shader "CustomEffects/Volumetrics"
                 stepSize = highDetailStepSize;
                 highDetailDistanceTravelled = 0.0f;
                 if(atmosphereFadeDistance == 0)
-                    atmosphereFadeDistance = length(startingCameraPosition - rayPosition);
+                    atmosphereFadeDistance = length(_WorldSpaceCameraPos - rayPosition);
                 continue;
             }
             if (densityAtPoint <= 0.0f && highDetailDistanceTravelled > highDetailStepSize * 10.0f &&

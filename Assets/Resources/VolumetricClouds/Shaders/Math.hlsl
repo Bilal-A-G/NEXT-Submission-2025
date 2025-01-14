@@ -5,6 +5,23 @@ float R(float value, float low, float high, float newLow, float newHigh)
     return newLow + (value - low) * (newHigh - newLow) / (high - low);
 }
 
+float2 RaySphereIntersect(float3 rayOrigin, float3 rayDirection, float3 spherePosition, float sphereRadius)
+{
+    float3 toSphere = rayOrigin - spherePosition;
+    
+    float b = 2 * dot(rayDirection, toSphere);
+    float c = pow(length(toSphere), 2) - pow(sphereRadius, 2);
+    float discriminant = pow(b, 2) - 4 * c;
+
+    if(discriminant < 0)
+        return float2(-1, -1);
+        
+    float farIntersection = -b/2.0f + sqrt(discriminant)/2.0f;
+    float nearIntersection = -b/2.0f - sqrt(discriminant)/2.0f;
+
+    return float2(nearIntersection, farIntersection);
+}
+
 float HenyeyGreenstein(float dotAngle, float g)
 {
     return 1.0f/(4.0f * Pi) * ((1.0f - pow(abs(g), 2.0f)) /
