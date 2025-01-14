@@ -11,15 +11,14 @@ namespace Volumetrics.Settings
     {
         [Header("Global")]
         public float globalDensity;
+        public Vector3 cloudCenter;
         public float cloudStart;
         public float cloudEnd;
-        [Range(0, 1)] public float skyCurvature;
         public float drawDistance;
         [Range(0, 1)] public float globalCoverage;
 
         [Space(25.0f)]
         [Header("Shaping")]
-
         public float shapeNoiseUVScale;
 
         public float detailNoiseUVScale;

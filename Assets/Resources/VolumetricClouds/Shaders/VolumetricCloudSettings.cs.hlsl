@@ -9,9 +9,9 @@
 struct VolumetricCloudSettings
 {
     float globalDensity;
+    float3 cloudCenter;
     float cloudStart;
     float cloudEnd;
-    float skyCurvature;
     float drawDistance;
     float globalCoverage;
     float shapeNoiseUVScale;

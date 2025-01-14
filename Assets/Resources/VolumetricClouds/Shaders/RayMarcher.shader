@@ -61,9 +61,9 @@ Shader "CustomEffects/Volumetrics"
 
         float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, input.texcoord), _ZBufferParams);
         float2 cloudStartIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
-            float3(0,0,0), settings.cloudStart);
+            settings.cloudCenter, settings.cloudStart);
         float2 cloudEndIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
-            float3(0,0,0), settings.cloudEnd);
+            settings.cloudCenter, settings.cloudEnd);
         
         float masterIntersectionPoint;
         //We are looking at the clouds from outside of the cloud end
@@ -117,13 +117,17 @@ Shader "CustomEffects/Volumetrics"
         
         float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint) +
             viewVector * (blueNoiseOffset * stepSize * 2).xyz;
-        distanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
+        
+        float adjustedistanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
         
         [loop]
-        while (distanceTravelled < distanceLimit)
+        while (distanceTravelled < adjustedistanceLimit)
         {
             float3 rayPosition = cameraPosition + viewVector * distanceTravelled;
-            float percentHeight = R(length(rayPosition),settings.cloudStart, settings.cloudEnd, 0, 1);
+            float percentInsideCloudLayer = R(length(rayPosition - settings.cloudCenter),settings.cloudStart,
+                 settings.cloudEnd, 0, 1);
+            float percentHeight = percentInsideCloudLayer; //pow(saturate(dot(normalize(rayPosition) * percentInsideCloudLayer, normal)), 2.0f);
+            
             float densityAtPoint = SampleDensity(rayPosition, percentHeight, settings) * stepSize;
 
             distanceFade += length(cameraPosition - rayPosition) * transmittance;

@@ -62,12 +62,12 @@ MonoBehaviour:
       contribution: 1
     textureOutput: {fileID: 0}
   settings:
-    globalDensity: 42.8
-    cloudStart: 500
-    cloudEnd: 700
-    skyCurvature: 0
+    globalDensity: 95.4
+    cloudCenter: {x: 0, y: -703.1, z: 0}
+    cloudStart: 800
+    cloudEnd: 1000
     drawDistance: 560
-    globalCoverage: 0.489
+    globalCoverage: 0.464
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01
     shapeNoiseUVOffset: {x: 0, y: 0}
