@@ -65,7 +65,7 @@ MonoBehaviour:
     cloudCenter: {x: 0, y: -1916, z: 0}
     cloudStart: 2000
     cloudEnd: 2200
-    drawDistance: 560
+    cloudCutoff: 0.96
     globalCoverage: 0.624
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01

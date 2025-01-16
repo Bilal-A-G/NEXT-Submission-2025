@@ -14,7 +14,7 @@ namespace Volumetrics.Settings
         public Vector3 cloudCenter;
         public float cloudStart;
         public float cloudEnd;
-        public float drawDistance;
+        [Range(-1, 1)] public float cloudCutoff;
         [Range(0, 1)] public float globalCoverage;
 
         [Space(25.0f)]

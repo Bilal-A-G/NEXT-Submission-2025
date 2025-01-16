@@ -56,7 +56,6 @@ Shader "CustomEffects/Volumetrics"
         viewVector = mul(unity_CameraToWorld, float4(viewVector.x, viewVector.y, viewVector.z, 0.0f)).xyz;
         viewVector = normalize(viewVector);
 
-        float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, input.texcoord), _ZBufferParams);
         float2 cloudStartIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
             settings.cloudCenter, settings.cloudStart);
         float2 cloudEndIntersection = RaySphereIntersect(_WorldSpaceCameraPos, viewVector,
@@ -97,14 +96,17 @@ Shader "CustomEffects/Volumetrics"
         
         float distanceLimit = cloudEndIntersection.y;
         float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint + blueNoiseOffset.x * stepSize * 2);
-        float adjustedistanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
 
         [loop]
-        while (distanceTravelled < adjustedistanceLimit)
+        while (distanceTravelled < distanceLimit)
         {
             float3 rayPosition = cameraPosition + viewVector * distanceTravelled;
             float percentInsideCloudLayer = R(length(rayPosition - settings.cloudCenter),settings.cloudStart,
                  settings.cloudEnd, 0, 1);
+
+            //Only render a hemisphere, or a full sphere depending on cutoff settings
+            if(dot(normalize(rayPosition - settings.cloudCenter), float3(0, 1, 0)) <= settings.cloudCutoff)
+                break;
             
             float densityAtPoint = SampleDensity(rayPosition, percentInsideCloudLayer, settings) * stepSize;
             stepsTaken++;

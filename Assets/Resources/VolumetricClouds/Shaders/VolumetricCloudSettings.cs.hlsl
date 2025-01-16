@@ -12,7 +12,7 @@ struct VolumetricCloudSettings
     float3 cloudCenter;
     float cloudStart;
     float cloudEnd;
-    float drawDistance;
+    float cloudCutoff;
     float globalCoverage;
     float shapeNoiseUVScale;
     float detailNoiseUVScale;
