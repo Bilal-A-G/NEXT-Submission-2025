@@ -66,7 +66,7 @@ namespace Volumetrics
         }
 
         public RTHandle GetQuarterResAccumulationMap(Vector2 screenSize) =>
-            GetRenderTexture(screenSize, ref _cloudQuarterResAccumulationMap, new Vector2Int(4, 4));
+            GetRenderTexture(screenSize, ref _cloudQuarterResAccumulationMap, new Vector2Int(1, 1));
 
         private void OnDisable()
         {

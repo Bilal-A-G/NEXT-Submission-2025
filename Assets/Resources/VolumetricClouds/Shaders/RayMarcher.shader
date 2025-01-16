@@ -16,7 +16,6 @@ Shader "CustomEffects/Volumetrics"
     Texture3D<float4> shapeNoise;
     Texture3D<float4> detailNoise;
     Texture2D<float4> blueNoise;
-    Texture2D<float4> weatherMap;
 
     float2 imageSize;
 
@@ -30,8 +29,6 @@ Shader "CustomEffects/Volumetrics"
             (position.xyz + float3(settings.detailNoiseUVOffset.x, 0, settings.detailNoiseUVOffset.y)) *
             settings.detailNoiseUVScale, 0);
         
-        //float4 weatherMapSample = weatherMap.SampleLevel(sampler_weatherMap, localCoordinates.xz, 0);
-            
         float fbm = noiseSample.y * 0.625f + noiseSample.z * 0.25f + noiseSample.w * 0.125f;
         float finalShape = R(noiseSample.x, fbm - 1, 1, 0, 1);
             
@@ -81,22 +78,11 @@ Shader "CustomEffects/Volumetrics"
         {
             masterIntersectionPoint = 0;
         }
-
-        //"Broad phase" culling, do not raymatch if we can't see the cloud start, or cloud end spheres, or if the
-        //scene depth is less than the distance to the cloud start sphere
-        //if we are in between the 2 spheres, then we should be able to touch the clouds, and therefore can't cull anything
-        if((cloudStartIntersection.y > depth || cloudStartIntersection.y < 0) &&
-            ((masterIntersectionPoint == cloudStartIntersection.y ?
-                cloudEndIntersection.y > depth : false)) && cloudEndIntersection.x < 0)
-        {
-            return float4(0,0,0,0);
-        }
         
         int sunSteps = 3;
         float transmittance = 1;
         float radiance = 0;
-        float distanceFade = 0;
-        float atmosphereFadeDistance = 0;
+        float cloudDepth = 0;
         
         float highDetailStepSize = 1.0f;
         float lowDetailStepSize = 3.0f;
@@ -111,9 +97,8 @@ Shader "CustomEffects/Volumetrics"
         
         float distanceLimit = cloudEndIntersection.y;
         float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint + blueNoiseOffset.x * stepSize * 2);
-        
         float adjustedistanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
-        
+
         [loop]
         while (distanceTravelled < adjustedistanceLimit)
         {
@@ -122,8 +107,6 @@ Shader "CustomEffects/Volumetrics"
                  settings.cloudEnd, 0, 1);
             
             float densityAtPoint = SampleDensity(rayPosition, percentInsideCloudLayer, settings) * stepSize;
-
-            distanceFade += length(cameraPosition - rayPosition) * transmittance;
             stepsTaken++;
             
             distanceTravelled += stepSize;
@@ -136,8 +119,6 @@ Shader "CustomEffects/Volumetrics"
                 distanceTravelled -= stepSize * 2;
                 stepSize = highDetailStepSize;
                 highDetailDistanceTravelled = 0.0f;
-                if(atmosphereFadeDistance == 0)
-                    atmosphereFadeDistance = length(_WorldSpaceCameraPos - rayPosition);
                 continue;
             }
             if (densityAtPoint <= 0.0f && highDetailDistanceTravelled > highDetailStepSize * 10.0f &&
@@ -149,6 +130,9 @@ Shader "CustomEffects/Volumetrics"
 
             if(densityAtPoint <= 0)
                 continue;
+
+            if(cloudDepth == 0)
+                cloudDepth = length(_WorldSpaceCameraPos - rayPosition);
             
             float toSunDensity = 0.0f;
             for (int v = 0; v < sunSteps; v++)
@@ -172,10 +156,10 @@ Shader "CustomEffects/Volumetrics"
             float sunLocalIntensity = settings.sunExtraIntensity * pow(clamp(dotAngle, 0, 1), settings.sunExtraIntensityLocalization);
             float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, settings.inScattering), sunLocalIntensity),
                 HenyeyGreenstein(dotAngle, -settings.outScattering), settings.inToOutScatteringInterpolation);
-                
-            radiance += densityAtPoint * transmittance * outScattering * shadow;
-            transmittance *= exp(-densityAtPoint * settings.absorption);
 
+            transmittance *= exp(-densityAtPoint * settings.absorption);
+            radiance += densityAtPoint * transmittance * outScattering * shadow;
+            
             if(radiance >= 1.0f)
                 break;
                 
@@ -183,12 +167,10 @@ Shader "CustomEffects/Volumetrics"
                 break;    
         }
 
-        float attenuatedTransmittance = clamp(1 * (1 - transmittance), 0, 1);
+        float attenuatedTransmittance = clamp(1 - transmittance, 0, 1);
         attenuatedTransmittance = smoothstep(0, 1, attenuatedTransmittance);
-        distanceFade/= distanceLimit;
         
-        return float4((attenuatedTransmittance * settings.cloudTint * radiance + unity_AmbientSky * (1 - radiance)).xyz,
-            attenuatedTransmittance);
+        return float4(radiance, cloudDepth, attenuatedTransmittance, 0);
     }
     
     ENDHLSL

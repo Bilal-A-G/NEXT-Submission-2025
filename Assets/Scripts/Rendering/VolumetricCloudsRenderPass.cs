@@ -29,8 +29,6 @@ namespace Rendering
         {
             _profile.BlueNoise.wrapMode = TextureWrapMode.Repeat;
             _profile.BlueNoise.filterMode = FilterMode.Bilinear;
-            _profile.weatherMap.wrapMode = TextureWrapMode.Repeat;
-            _profile.weatherMap.filterMode = FilterMode.Bilinear;
             
             _profile.shapeNoise.textureOutput.wrapMode = TextureWrapMode.Repeat;
             _profile.shapeNoise.textureOutput.filterMode = FilterMode.Bilinear;
@@ -41,7 +39,6 @@ namespace Rendering
             material.SetTexture(Shader.PropertyToID("shapeNoise"), _profile.shapeNoise.textureOutput);
             material.SetTexture(Shader.PropertyToID("detailNoise"), _profile.detailNoise.textureOutput);
             material.SetTexture(Shader.PropertyToID("blueNoise"), _profile.BlueNoise);
-            material.SetTexture(Shader.PropertyToID("weatherMap"), _profile.weatherMap);
             
             material.SetVector(Shader.PropertyToID("imageSize"), (Vector2)renderTargetDimensions);
 
@@ -89,6 +86,7 @@ namespace Rendering
 
             Material compositorMaterial = VolumetricCloudsResourceManager.GetInstance().GetCompositorMaterial();
             compositorMaterial.SetTexture(Shader.PropertyToID("Clouds"), cloudQuarterResAccumulationMap);
+            compositorMaterial.SetVector(Shader.PropertyToID("cloudTint"), _profile.settings.cloudTint);
             passParams = new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, 
                     outputHandle, compositorMaterial, 0);
             

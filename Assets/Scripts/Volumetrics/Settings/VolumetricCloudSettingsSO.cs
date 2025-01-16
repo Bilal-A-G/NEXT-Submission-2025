@@ -10,8 +10,6 @@ namespace Volumetrics.Settings
         public Shader RayMarcher => Resources.Load<Shader>("VolumetricClouds/Shaders/RayMarcher");
         public Shader Compositor => Resources.Load<Shader>("VolumetricClouds/Shaders/Compositor");
         
-        public Texture2D weatherMap;
-
         [Space(25.0f)]
         [Header("Noise")]
         public NoiseTextureData shapeNoise;
