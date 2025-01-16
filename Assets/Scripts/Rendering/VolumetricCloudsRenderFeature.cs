@@ -38,7 +38,6 @@ namespace Rendering
             if(_cloudsRenderPass == null || !Application.isPlaying)
                 return;
             
-            _cloudsRenderPass.ConfigureInput(ScriptableRenderPassInput.Motion);
             renderer.EnqueuePass(_cloudsRenderPass);
         }
     }

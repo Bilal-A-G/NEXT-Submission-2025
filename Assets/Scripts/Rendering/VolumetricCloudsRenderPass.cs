@@ -89,8 +89,6 @@ namespace Rendering
 
             Material compositorMaterial = VolumetricCloudsResourceManager.GetInstance().GetCompositorMaterial();
             compositorMaterial.SetTexture(Shader.PropertyToID("Clouds"), cloudQuarterResAccumulationMap);
-            compositorMaterial.SetFloat(Shader.PropertyToID("cloudStart"), _profile.settings.cloudStart);
-            compositorMaterial.SetVector(Shader.PropertyToID("imageSize"), (Vector2)renderTargetDimensions);
             passParams = new RenderGraphUtils.BlitMaterialParameters(currentScreenHandle, 
                     outputHandle, compositorMaterial, 0);
             

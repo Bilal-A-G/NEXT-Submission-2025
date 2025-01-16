@@ -98,25 +98,19 @@ Shader "CustomEffects/Volumetrics"
         float distanceFade = 0;
         float atmosphereFadeDistance = 0;
         
-        float highDetailStepSize = 0.5f;
-        float lowDetailStepSize = 1.0f;
+        float highDetailStepSize = 1.0f;
+        float lowDetailStepSize = 3.0f;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
 
-        float4 blueNoiseOffset = float4(0,0,0,0); //SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord);
+        float4 blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord);
         float distanceTravelled = 0;
         int stepsTaken = 0;
         float lightingStepSize = 2.0f;
         
-        float distanceLimit = settings.cloudEnd - settings.cloudStart;
-        if(masterIntersectionPoint == 0 || masterIntersectionPoint == cloudEndIntersection.x)
-        {
-            distanceLimit = cloudEndIntersection.y;
-        }
-        
-        float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint) +
-            viewVector * (blueNoiseOffset * stepSize * 2).xyz;
+        float distanceLimit = cloudEndIntersection.y;
+        float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint + blueNoiseOffset.x * stepSize * 2);
         
         float adjustedistanceLimit = min(depth-masterIntersectionPoint, distanceLimit);
         
@@ -126,9 +120,8 @@ Shader "CustomEffects/Volumetrics"
             float3 rayPosition = cameraPosition + viewVector * distanceTravelled;
             float percentInsideCloudLayer = R(length(rayPosition - settings.cloudCenter),settings.cloudStart,
                  settings.cloudEnd, 0, 1);
-            float percentHeight = percentInsideCloudLayer; //pow(saturate(dot(normalize(rayPosition) * percentInsideCloudLayer, normal)), 2.0f);
             
-            float densityAtPoint = SampleDensity(rayPosition, percentHeight, settings) * stepSize;
+            float densityAtPoint = SampleDensity(rayPosition, percentInsideCloudLayer, settings) * stepSize;
 
             distanceFade += length(cameraPosition - rayPosition) * transmittance;
             stepsTaken++;
@@ -172,8 +165,8 @@ Shader "CustomEffects/Volumetrics"
             shadow = max(toSunDensity * settings.shadowDetail, shadow);
             float outScattering = 1 - saturate(settings.powderAmount * 2 *
                     pow(abs(densityAtPoint * (1 - transmittance)),
-                        R(percentHeight, 0.3f, 0.9f, 0.5, 1.0f))) *
-                saturate(pow(abs(R(percentHeight, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
+                        R(percentInsideCloudLayer, 0.3f, 0.9f, 0.5, 1.0f))) *
+                saturate(pow(abs(R(percentInsideCloudLayer, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
 
             float dotAngle = dot(-_MainLightPosition, normalize(rayPosition - cameraPosition));
             float sunLocalIntensity = settings.sunExtraIntensity * pow(clamp(dotAngle, 0, 1), settings.sunExtraIntensityLocalization);
@@ -190,8 +183,7 @@ Shader "CustomEffects/Volumetrics"
                 break;    
         }
 
-        float attenuatedTransmittance = clamp(exp(-atmosphereFadeDistance / (settings.atmosphereBlending * 100.0f)) *
-            (1 - transmittance), 0, 1);
+        float attenuatedTransmittance = clamp(1 * (1 - transmittance), 0, 1);
         attenuatedTransmittance = smoothstep(0, 1, attenuatedTransmittance);
         distanceFade/= distanceLimit;
         

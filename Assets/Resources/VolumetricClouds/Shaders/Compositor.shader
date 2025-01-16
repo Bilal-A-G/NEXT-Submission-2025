@@ -9,10 +9,8 @@ Shader "CustomEffects/Volumetrics"
     #include "Math.hlsl"
 
     sampler2D _CameraDepthTexture;
-    float cloudStart;
     Texture2D<float4> Clouds;
-    float2 imageSize;
-
+    
     float4 Composite(Varyings input) : SV_Target
     {
         float4 originalColour = SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord);
