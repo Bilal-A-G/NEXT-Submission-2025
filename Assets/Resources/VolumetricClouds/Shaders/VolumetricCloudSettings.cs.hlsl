@@ -21,6 +21,7 @@ struct VolumetricCloudSettings
     float absorption;
     float4 cloudTint; // x: r y: g z: b w: a 
     float atmosphereBlending;
+    float atmosphereBlendingCutoff;
     float sunExtraIntensity;
     float sunExtraIntensityLocalization;
     float minimumShadowing;

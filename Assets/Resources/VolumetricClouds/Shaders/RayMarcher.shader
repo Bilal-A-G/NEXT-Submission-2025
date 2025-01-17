@@ -83,19 +83,22 @@ Shader "CustomEffects/Volumetrics"
         float radiance = 0;
         float cloudDepth = 0;
         
-        float highDetailStepSize = 1.0f;
+        float highDetailStepSize = 2.0f;
         float lowDetailStepSize = 3.0f;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
 
-        float4 blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord);
+        float4 blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord*4.0f);
         float distanceTravelled = 0;
         int stepsTaken = 0;
         float lightingStepSize = 2.0f;
         
         float distanceLimit = cloudEndIntersection.y;
-        float3 cameraPosition = _WorldSpaceCameraPos + viewVector * (masterIntersectionPoint + blueNoiseOffset.x * stepSize * 2);
+        float3 cameraPosition = _WorldSpaceCameraPos + viewVector * masterIntersectionPoint +
+            viewVector * blueNoiseOffset * 20;
+
+        float hemisphereFalloff = dot(normalize(cameraPosition - settings.cloudCenter), float3(0,1,0));
 
         [loop]
         while (distanceTravelled < distanceLimit)
@@ -168,8 +171,10 @@ Shader "CustomEffects/Volumetrics"
             if(transmittance <= 0.01f)
                 break;    
         }
-
-        float attenuatedTransmittance = clamp(1 - transmittance, 0, 1);
+        
+        float attenuatedTransmittance = saturate((1 - transmittance) *
+            pow(2.0f, -clamp(cloudDepth - settings.atmosphereBlendingCutoff, 0, settings.cloudEnd) /
+                (settings.atmosphereBlending * 100.0f)));
         attenuatedTransmittance = smoothstep(0, 1, attenuatedTransmittance);
         
         return float4(radiance, cloudDepth, attenuatedTransmittance, 0);

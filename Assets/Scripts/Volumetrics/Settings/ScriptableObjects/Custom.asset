@@ -65,7 +65,7 @@ MonoBehaviour:
     cloudCenter: {x: 0, y: -1916, z: 0}
     cloudStart: 2000
     cloudEnd: 2200
-    cloudCutoff: 0.96
+    cloudCutoff: -1
     globalCoverage: 0.624
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01
@@ -73,7 +73,8 @@ MonoBehaviour:
     detailNoiseUVOffset: {x: 0, y: 0}
     absorption: 1
     cloudTint: {r: 1, g: 1, b: 1, a: 1}
-    atmosphereBlending: 627.9
+    atmosphereBlending: 0.64
+    atmosphereBlendingCutoff: 151.2
     sunExtraIntensity: 1
     sunExtraIntensityLocalization: 1
     minimumShadowing: 0.192

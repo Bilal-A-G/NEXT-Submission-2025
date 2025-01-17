@@ -31,6 +31,8 @@ namespace Volumetrics.Settings
         public Color cloudTint;
 
         public float atmosphereBlending;
+        public float atmosphereBlendingCutoff;
+
         public float sunExtraIntensity;
         public float sunExtraIntensityLocalization;
         [Range(0,1)] public float minimumShadowing;
