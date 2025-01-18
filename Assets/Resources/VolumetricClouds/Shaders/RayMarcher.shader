@@ -78,13 +78,12 @@ Shader "CustomEffects/Volumetrics"
             masterIntersectionPoint = 0;
         }
         
-        int sunSteps = 3;
         float transmittance = 1;
         float radiance = 0;
         float cloudDepth = 0;
         
-        float highDetailStepSize = 2.0f;
-        float lowDetailStepSize = 3.0f;
+        float highDetailStepSize = 1.0f;
+        float lowDetailStepSize = 2.0f;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
@@ -92,14 +91,11 @@ Shader "CustomEffects/Volumetrics"
         float4 blueNoiseOffset = SAMPLE_TEXTURE2D(blueNoise, sampler_LinearRepeat, input.texcoord*4.0f);
         float distanceTravelled = 0;
         int stepsTaken = 0;
-        float lightingStepSize = 2.0f;
         
         float distanceLimit = cloudEndIntersection.y;
         float3 cameraPosition = _WorldSpaceCameraPos + viewVector * masterIntersectionPoint +
             viewVector * blueNoiseOffset * 20;
-
-        float hemisphereFalloff = dot(normalize(cameraPosition - settings.cloudCenter), float3(0,1,0));
-
+        
         [loop]
         while (distanceTravelled < distanceLimit)
         {
@@ -140,44 +136,35 @@ Shader "CustomEffects/Volumetrics"
                 cloudDepth = length(_WorldSpaceCameraPos - rayPosition);
             
             float toSunDensity = 0.0f;
+            float lightingStepSize = 20.0f;
+
+            int sunSteps = int((settings.cloudEnd - length(rayPosition - settings.cloudCenter))/lightingStepSize) + 1;
             for (int v = 0; v < sunSteps; v++)
             {
-                rayPosition += -_MainLightPosition * lightingStepSize;
-                float toSunPercentHeight = rayPosition.y / 500.0f;
-                toSunDensity += SampleDensity(rayPosition, toSunPercentHeight, settings) * lightingStepSize;
+                rayPosition += normalize(_MainLightPosition) * lightingStepSize;
+                float toSunPercentInsideCloudLayer = R(length(rayPosition - settings.cloudCenter),settings.cloudStart,
+                 settings.cloudEnd, 0, 1);
+                toSunDensity += SampleDensity(rayPosition, toSunPercentInsideCloudLayer, settings) * lightingStepSize;
 
                 if(toSunDensity >= 1.0f)
                     break;
             }
             
-            float shadow = clamp(exp(-toSunDensity), settings.minimumShadowing, 1.0f);
-            shadow = max(toSunDensity * settings.shadowDetail, shadow);
-            float outScattering = 1 - saturate(settings.powderAmount * 2 *
-                    pow(abs(densityAtPoint * (1 - transmittance)),
-                        R(percentInsideCloudLayer, 0.3f, 0.9f, 0.5, 1.0f))) *
-                saturate(pow(abs(R(percentInsideCloudLayer, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
+            float beerContribution = exp(toSunDensity * -settings.absorption);
+            beerContribution = max(beerContribution, exp((1 - settings.minimumShadowing) * -settings.absorption));
 
-            float dotAngle = dot(-_MainLightPosition, normalize(rayPosition - cameraPosition));
-            float sunLocalIntensity = settings.sunExtraIntensity * pow(clamp(dotAngle, 0, 1), settings.sunExtraIntensityLocalization);
-            float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, settings.inScattering), sunLocalIntensity),
-                HenyeyGreenstein(dotAngle, -settings.outScattering), settings.inToOutScatteringInterpolation);
-
-            transmittance *= exp(-densityAtPoint * settings.absorption);
-            radiance += densityAtPoint * transmittance * outScattering * shadow;
-            
-            if(radiance >= 1.0f)
-                break;
+            radiance += densityAtPoint * transmittance * beerContribution;
+            transmittance *= exp(-densityAtPoint);
                 
             if(transmittance <= 0.01f)
                 break;    
         }
         
-        float attenuatedTransmittance = saturate((1 - transmittance) *
-            pow(2.0f, -clamp(cloudDepth - settings.atmosphereBlendingCutoff, 0, settings.cloudEnd) /
-                (settings.atmosphereBlending * 100.0f)));
-        attenuatedTransmittance = smoothstep(0, 1, attenuatedTransmittance);
+        float attenuatedTransmittance = saturate(1 - transmittance);
+        float distanceFade = exp(-clamp(cloudDepth - settings.atmosphereBlendingCutoff, 0, settings.cloudEnd) /
+                (settings.atmosphereBlending * 100.0f));
         
-        return float4(radiance, cloudDepth, attenuatedTransmittance, 0);
+        return float4(radiance, cloudDepth, attenuatedTransmittance, distanceFade);
     }
     
     ENDHLSL

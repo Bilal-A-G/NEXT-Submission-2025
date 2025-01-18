@@ -18,7 +18,8 @@ Shader "CustomEffects/Volumetrics"
         float4 cloudData = SAMPLE_TEXTURE2D(Clouds, sampler_LinearClamp, input.texcoord);
         float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, input.texcoord), _ZBufferParams);
 
-        float4 cloudColour = float4((cloudData.z * cloudTint * cloudData.x + unity_AmbientSky * (1 - cloudData.x)).xyz, cloudData.z);
+        float4 cloudColour = float4((cloudData.z * cloudTint * cloudData.x + unity_AmbientSky * (1 - cloudData.x)).xyz,
+            cloudData.z * cloudData.w);
         float cloudDepth = cloudData.y;
         
         if(cloudDepth > depth)

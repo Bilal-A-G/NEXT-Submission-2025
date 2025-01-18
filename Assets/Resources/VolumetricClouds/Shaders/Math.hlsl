@@ -1,6 +1,4 @@
-﻿float Pi = 3.141592653589793238462643383279502884197169;
-
-float R(float value, float low, float high, float newLow, float newHigh)
+﻿float R(float value, float low, float high, float newLow, float newHigh)
 {
     return newLow + (value - low) * (newHigh - newLow) / (high - low);
 }
@@ -40,12 +38,6 @@ float2 RaySphereIntersect(float3 rayOrigin, float3 rayDirection, float3 spherePo
     float nearIntersection = -b/2.0f - sqrt(discriminant)/2.0f;
 
     return float2(nearIntersection, farIntersection);
-}
-
-float HenyeyGreenstein(float dotAngle, float g)
-{
-    return 1.0f/(4.0f * Pi) * ((1.0f - pow(abs(g), 2.0f)) /
-        pow(abs(1.0f + pow(abs(g), 2.0f) - g * 2.0f * cos(dotAngle)), 3.0f/2.0f));
 }
 
 float ShapeAlteringHeight(float percentHeight, float maxHeightPercent)

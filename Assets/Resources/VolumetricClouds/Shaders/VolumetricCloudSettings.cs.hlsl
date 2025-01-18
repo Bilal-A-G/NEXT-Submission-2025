@@ -22,14 +22,8 @@ struct VolumetricCloudSettings
     float4 cloudTint; // x: r y: g z: b w: a 
     float atmosphereBlending;
     float atmosphereBlendingCutoff;
-    float sunExtraIntensity;
-    float sunExtraIntensityLocalization;
     float minimumShadowing;
-    float shadowDetail;
     float powderAmount;
-    float inScattering;
-    float outScattering;
-    float inToOutScatteringInterpolation;
 };
 
 

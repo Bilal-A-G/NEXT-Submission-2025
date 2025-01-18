@@ -33,13 +33,6 @@ namespace Volumetrics.Settings
         public float atmosphereBlending;
         public float atmosphereBlendingCutoff;
 
-        public float sunExtraIntensity;
-        public float sunExtraIntensityLocalization;
         [Range(0,1)] public float minimumShadowing;
-        [Range(0,1)] public float shadowDetail;
-        [Range(0, 1)] public float powderAmount;
-        [Range(0, 1)] public float inScattering;
-        [Range(0, 1)] public float outScattering;
-        [Range(0, 1)] public float inToOutScatteringInterpolation;
     }
 }
