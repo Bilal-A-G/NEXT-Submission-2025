@@ -136,7 +136,7 @@ Shader "CustomEffects/Volumetrics"
                 cloudDepth = length(_WorldSpaceCameraPos - rayPosition);
             
             float toSunDensity = 0.0f;
-            float lightingStepSize = 20.0f;
+            float lightingStepSize = 10.0f;
 
             int sunSteps = int((settings.cloudEnd - length(rayPosition - settings.cloudCenter))/lightingStepSize) + 1;
             for (int v = 0; v < sunSteps; v++)

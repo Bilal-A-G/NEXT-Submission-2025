@@ -21,12 +21,6 @@ namespace StarterAssets
 		public float RotationSpeed = 1.0f;
 		[Tooltip("Acceleration and deceleration")]
 		public float SpeedChangeRate = 10.0f;
-		[Tooltip("FOV when zoomed in")]
-		public float ZoomFOV = 60.0f;
-		[Tooltip("Standard FOV, when not zooming in")]
-		public float StandardFOV = 90.0f;
-		[Tooltip("How fast the camera zooms")]
-		public float ZoomSpeed;
 
 		[Space(10)]
 		[Tooltip("The height the player can jump")]
@@ -104,8 +98,6 @@ namespace StarterAssets
 			{
 				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
 			}
-
-			_currentFOV = StandardFOV;
 		}
 
 		private void Start()
@@ -128,10 +120,6 @@ namespace StarterAssets
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
-
-			_targetFOV = _input.zoom ? ZoomFOV : StandardFOV;
-			_currentFOV = Mathf.Lerp(_currentFOV, _targetFOV, Time.deltaTime * ZoomSpeed);
-			CinemachineCamera.Lens.FieldOfView = _currentFOV;
 		}
 
 		private void LateUpdate()
