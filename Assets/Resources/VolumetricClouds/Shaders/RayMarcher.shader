@@ -37,7 +37,6 @@ Shader "CustomEffects/Volumetrics"
         float detailNoiseModification = 0.35f * exp(-settings.globalCoverage * 0.75f) * lerp(detailFBM, 1 - detailFBM,
             clamp(percentHeight * 5.0f, 0, 1));
             
-        //float cloudProbability = max(weatherMapSample.x, clamp(threshold - 0.5f, 0, 1) * weatherMapSample.y * 2);
         float shapeAltering = ShapeAlteringHeight(percentHeight, 1.0f);
         float densityAltering = DensityAlteringHeight(percentHeight, 1.0f, settings.globalDensity);
             
@@ -82,8 +81,8 @@ Shader "CustomEffects/Volumetrics"
         float radiance = 0;
         float cloudDepth = 0;
         
-        float highDetailStepSize = 1.0f;
-        float lowDetailStepSize = 2.0f;
+        float highDetailStepSize = settings.highDetailStepSize;
+        float lowDetailStepSize = settings.lowDetailStepSize;
 
         float highDetailDistanceTravelled = 0.0f;
         float stepSize = lowDetailStepSize;
@@ -136,7 +135,7 @@ Shader "CustomEffects/Volumetrics"
                 cloudDepth = length(_WorldSpaceCameraPos - rayPosition);
             
             float toSunDensity = 0.0f;
-            float lightingStepSize = 10.0f;
+            float lightingStepSize = settings.lightingStepSize;
 
             int sunSteps = int((settings.cloudEnd - length(rayPosition - settings.cloudCenter))/lightingStepSize) + 1;
             for (int v = 0; v < sunSteps; v++)

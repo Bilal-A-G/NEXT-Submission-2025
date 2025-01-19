@@ -17,6 +17,12 @@ namespace Volumetrics.Settings
         [Range(-1, 1)] public float cloudCutoff;
         [Range(0, 1)] public float globalCoverage;
 
+        [Space(25.0f)] 
+        [Header("Quality")] 
+        public float highDetailStepSize;
+        public float lowDetailStepSize;
+        public float lightingStepSize;
+        
         [Space(25.0f)]
         [Header("Shaping")]
         public float shapeNoiseUVScale;

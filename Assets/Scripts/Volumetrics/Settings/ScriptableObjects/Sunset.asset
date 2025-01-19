@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac79cd4e88b035f48bca1e9d87391ed7, type: 3}
-  m_Name: Default
+  m_Name: Sunset
   m_EditorClassIdentifier: 
   shapeNoise:
     powTwoExponentTextureSize: 8
@@ -61,12 +61,12 @@ MonoBehaviour:
       contribution: 1
     textureOutput: {fileID: 0}
   settings:
-    globalDensity: 3.12
-    cloudCenter: {x: 0, y: -2858, z: 0}
-    cloudStart: 3000
-    cloudEnd: 3150
-    cloudCutoff: 0.98
-    globalCoverage: 0.95
+    globalDensity: 8
+    cloudCenter: {x: 0, y: -3779, z: 0}
+    cloudStart: 4000
+    cloudEnd: 4200
+    cloudCutoff: 0.94
+    globalCoverage: 0.689
     highDetailStepSize: 1
     lowDetailStepSize: 10
     lightingStepSize: 10
@@ -74,14 +74,14 @@ MonoBehaviour:
     detailNoiseUVScale: 0.01
     shapeNoiseUVOffset: {x: 0, y: 0}
     detailNoiseUVOffset: {x: 0, y: 0}
-    absorption: 8
-    cloudTint: {r: 1, g: 1, b: 1, a: 1}
-    sunExtraIntensity: 0.55
-    sunExtraIntensityLocalization: 38
-    atmosphereBlending: 1.68
-    atmosphereBlendingCutoff: 243
+    absorption: 2
+    cloudTint: {r: 1, g: 0.24039882, b: 0, a: 1}
+    sunExtraIntensity: 3043
+    sunExtraIntensityLocalization: 4.23
+    atmosphereBlending: 1247.6
+    atmosphereBlendingCutoff: 0
     powderAmount: 1
     inScattering: 1
-    outScattering: 1
-    inToOutScatteringInterpolation: -1
-    minimumShadowing: 0.841
+    outScattering: 0
+    inToOutScatteringInterpolation: 0
+    minimumShadowing: 0

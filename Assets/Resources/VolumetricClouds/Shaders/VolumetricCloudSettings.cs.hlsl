@@ -14,6 +14,9 @@ struct VolumetricCloudSettings
     float cloudEnd;
     float cloudCutoff;
     float globalCoverage;
+    float highDetailStepSize;
+    float lowDetailStepSize;
+    float lightingStepSize;
     float shapeNoiseUVScale;
     float detailNoiseUVScale;
     float2 shapeNoiseUVOffset;

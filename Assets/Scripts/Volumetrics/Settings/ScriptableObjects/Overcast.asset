@@ -65,20 +65,23 @@ MonoBehaviour:
     cloudCenter: {x: 0, y: -2858, z: 0}
     cloudStart: 3000
     cloudEnd: 3150
-    cloudCutoff: 0.9
-    globalCoverage: 0.958
+    cloudCutoff: 0.98
+    globalCoverage: 0.95
+    highDetailStepSize: 1
+    lowDetailStepSize: 10
+    lightingStepSize: 10
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01
     shapeNoiseUVOffset: {x: 0, y: 0}
     detailNoiseUVOffset: {x: 0, y: 0}
-    absorption: 2
+    absorption: 8
     cloudTint: {r: 1, g: 1, b: 1, a: 1}
-    sunExtraIntensity: -0.68
-    sunExtraIntensityLocalization: 97.4
-    atmosphereBlending: 114.5
+    sunExtraIntensity: 0.55
+    sunExtraIntensityLocalization: 38
+    atmosphereBlending: 1.7
     atmosphereBlendingCutoff: 243
-    powderAmount: 0.56
+    powderAmount: 1
     inScattering: 1
     outScattering: 1
-    inToOutScatteringInterpolation: 0.71
-    minimumShadowing: 0
+    inToOutScatteringInterpolation: -1
+    minimumShadowing: 0.841
