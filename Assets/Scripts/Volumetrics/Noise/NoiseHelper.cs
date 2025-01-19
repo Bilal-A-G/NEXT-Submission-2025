@@ -15,12 +15,21 @@ namespace Volumetrics.Noise
     [System.Serializable]
     public class NoiseData
     {
-        [FormerlySerializedAs("powTwoExponentScale")] public int powTwoExponentNoiseScale;
+        public int powTwoExponentNoiseScale;
         public int octaves;
         public NoiseChannel channel;
 
         public NoiseType type;
         [Range(0, 1)] public float contribution;
+
+        public NoiseData(int powTwoExponentNoiseScale, int octaves, NoiseChannel channel, NoiseType type, float contribution)
+        {
+            this.powTwoExponentNoiseScale = powTwoExponentNoiseScale;
+            this.octaves = octaves;
+            this.channel = channel;
+            this.type = type;
+            this.contribution = contribution;
+        }
     }
 
     [System.Serializable]
@@ -36,10 +45,16 @@ namespace Volumetrics.Noise
     [System.Serializable]
     public class NoiseTextureData
     {
-        [FormerlySerializedAs("powTwoExponentialTextureSize")] [FormerlySerializedAs("powTwoExponentTextureDimension")] public int powTwoExponentTextureSize;
+        public int powTwoExponentTextureSize;
         public List<NoiseData> channelNoises;
 
         [HideInInspector] public RenderTexture textureOutput;
+
+        public NoiseTextureData(int powTwoExponentTextureSize, List<NoiseData> channelNoises)
+        {
+            this.powTwoExponentTextureSize = powTwoExponentTextureSize;
+            this.channelNoises = channelNoises;
+        }
     }
     
     public enum NoiseType

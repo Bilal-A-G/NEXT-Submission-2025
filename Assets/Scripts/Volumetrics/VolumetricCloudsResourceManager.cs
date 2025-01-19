@@ -11,6 +11,7 @@ namespace Volumetrics
 {
     public class VolumetricCloudsResourceManager : MonoBehaviour
     {
+        [SerializeField] private int cloudBufferScale = 4;
         private static VolumetricCloudsResourceManager _instance;
         private Material _rayMarchMaterial;
         private Material _compositorMaterial;
@@ -66,7 +67,8 @@ namespace Volumetrics
         }
 
         public RTHandle GetQuarterResAccumulationMap(Vector2 screenSize) =>
-            GetRenderTexture(screenSize, ref _cloudQuarterResAccumulationMap, new Vector2Int(4, 4));
+            GetRenderTexture(screenSize, ref _cloudQuarterResAccumulationMap, 
+                new Vector2Int(cloudBufferScale, cloudBufferScale));
 
         private void OnDisable()
         {
