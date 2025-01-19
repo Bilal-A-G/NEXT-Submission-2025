@@ -20,10 +20,15 @@ struct VolumetricCloudSettings
     float2 detailNoiseUVOffset;
     float absorption;
     float4 cloudTint; // x: r y: g z: b w: a 
+    float sunExtraIntensity;
+    float sunExtraIntensityLocalization;
     float atmosphereBlending;
     float atmosphereBlendingCutoff;
-    float minimumShadowing;
     float powderAmount;
+    float inScattering;
+    float outScattering;
+    float inToOutScatteringInterpolation;
+    float minimumShadowing;
 };
 
 

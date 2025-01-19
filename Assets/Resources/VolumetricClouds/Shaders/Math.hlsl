@@ -3,6 +3,14 @@
     return newLow + (value - low) * (newHigh - newLow) / (high - low);
 }
 
+float HenyeyGreenstein(float dotAngle, float g)
+{
+    float Pi = 3.141592653589793238462643383279502884197169;
+
+    return 1.0f/(4.0f * Pi) * ((1.0f - pow(g, 2.0f)) /
+        pow(1.0f + pow(abs(g), 2.0f) - g * 2.0f * cos(dotAngle), 3.0f/2.0f));
+}
+
 //SLerp implementation from: https://www.shadertoy.com/view/4sV3zt
 //Interpolates 2 direction vectors in a spherical way.
 //Ie, rotates a vector by a percentage until it faces the other vector

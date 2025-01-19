@@ -153,7 +153,17 @@ Shader "CustomEffects/Volumetrics"
             float beerContribution = exp(toSunDensity * -settings.absorption);
             beerContribution = max(beerContribution, exp((1 - settings.minimumShadowing) * -settings.absorption));
 
-            radiance += densityAtPoint * transmittance * beerContribution;
+            float outScattering = 1 - saturate(settings.powderAmount * 2 *
+                    pow(abs(densityAtPoint * (1 - transmittance)),
+                        R(percentInsideCloudLayer, 0.3f, 0.9f, 0.5, 1.0f))) *
+                saturate(pow(abs(R(percentInsideCloudLayer, 0, 0.3f, 0.8f, 1.0f)), 0.8f));
+
+            float dotAngle = dot(_MainLightPosition, normalize(rayPosition - settings.cloudCenter));
+            float sunLocalIntensity = (1 + settings.sunExtraIntensity) * pow(saturate(dotAngle), settings.sunExtraIntensityLocalization + 0.1f);
+            float anisotropicScattering = lerp(max(HenyeyGreenstein(dotAngle, settings.inScattering), sunLocalIntensity),
+                HenyeyGreenstein(dotAngle, -settings.outScattering), settings.inToOutScatteringInterpolation);
+
+            radiance += densityAtPoint * transmittance * beerContribution * anisotropicScattering * outScattering;
             transmittance *= exp(-densityAtPoint);
                 
             if(transmittance <= 0.01f)

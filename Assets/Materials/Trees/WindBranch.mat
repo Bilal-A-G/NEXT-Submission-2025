@@ -156,7 +156,7 @@ Material:
     - _SunpunchthroughIntensity: 1.07
     - _SunpunchtrhoughIntensity: 0.89
     - _Surface: 0
-    - _TopDamping: 60
+    - _TopDamping: 5.28
     - _TopThreshold: 0
     - _WindIntensity: 2
     - _WindScale: 1

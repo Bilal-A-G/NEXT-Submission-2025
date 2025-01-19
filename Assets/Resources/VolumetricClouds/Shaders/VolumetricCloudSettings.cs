@@ -30,8 +30,14 @@ namespace Volumetrics.Settings
         public float absorption;
         public Color cloudTint;
 
+        public float sunExtraIntensity;
+        public float sunExtraIntensityLocalization;
         public float atmosphereBlending;
         public float atmosphereBlendingCutoff;
+        [Range(0, 1)] public float powderAmount;
+        [Range(0, 1)] public float inScattering;
+        [Range(0, 1)] public float outScattering;
+        [Range(-1, 1)] public float inToOutScatteringInterpolation;
 
         [Range(0,1)] public float minimumShadowing;
     }
