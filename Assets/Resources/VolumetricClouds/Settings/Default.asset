@@ -61,24 +61,24 @@ MonoBehaviour:
       contribution: 1
     textureOutput: {fileID: 0}
   settings:
-    globalDensity: 3.12
-    cloudCenter: {x: 0, y: -2858, z: 0}
+    globalDensity: 2.89
+    cloudCenter: {x: 0, y: -2800, z: 0}
     cloudStart: 3000
-    cloudEnd: 3150
-    cloudCutoff: 0.98
-    globalCoverage: 0.95
+    cloudEnd: 3100
+    cloudCutoff: 0.91
+    globalCoverage: 0.962
     highDetailStepSize: 1
     lowDetailStepSize: 10
     lightingStepSize: 10
     shapeNoiseUVScale: 0.001
     detailNoiseUVScale: 0.01
-    shapeNoiseUVOffset: {x: 0, y: 0}
+    shapeNoiseUVOffset: {x: -972.79, y: -995.86}
     detailNoiseUVOffset: {x: 0, y: 0}
-    absorption: 8
+    absorption: 10.63
     cloudTint: {r: 1, g: 1, b: 1, a: 1}
-    sunExtraIntensity: 0.55
-    sunExtraIntensityLocalization: 38
-    atmosphereBlending: 1.68
+    sunExtraIntensity: 0.59
+    sunExtraIntensityLocalization: 5.3
+    atmosphereBlending: 76.23
     atmosphereBlendingCutoff: 243
     powderAmount: 1
     inScattering: 1
