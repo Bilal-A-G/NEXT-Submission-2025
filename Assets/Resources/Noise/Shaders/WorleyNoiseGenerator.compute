@@ -1,0 +1,54 @@
+#pragma kernel CSMain
+#pragma target 5
+
+RWTexture3D<float4> output;
+StructuredBuffer<float3> points;
+
+int tiles;
+int tileSize;
+
+float4 channel;
+float contribution;
+
+[numthreads(1, 1, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float closestDist = 1000000000.0f;
+
+    int tileIndexX = id.x / tileSize;
+    int tileIndexY = id.y / tileSize;
+    int tileIndexZ = id.z / tileSize;
+    
+    for (int i = -1; i <= 1; i++)
+    {
+        uint xIndex = (uint)(tileIndexX + i + tiles) % tiles;
+        float xOffset = ((float)(tileIndexX + i)/(float)tiles - (float)xIndex/(float)tiles) * tiles;
+
+        for (int j = -1; j <= 1; j++)
+        {
+            uint yIndex = (uint)(tileIndexY + j + tiles) % tiles;
+            float yOffset = ((float)(tileIndexY + j)/(float)tiles - (float)yIndex/(float)tiles) * tiles;
+
+            for (int k = -1; k <= 1; k++)
+            {
+                uint zIndex = (uint)(tileIndexZ + k + tiles) % tiles;
+                float zOffset = ((float)(tileIndexZ + k)/(float)tiles - (float)zIndex/(float)tiles) * tiles;
+                
+                int flattenedIndex = zIndex * tiles * tiles + yIndex * tiles + xIndex;
+
+                float3 currentPoint = points[flattenedIndex] + float3(xOffset, yOffset, zOffset) * tileSize;
+
+                float dist = pow(id.x - currentPoint.x, 2) + pow(id.y - currentPoint.y, 2) + pow(id.z - currentPoint.z, 2);
+                if(closestDist > dist)
+                    closestDist = dist;
+            }
+        }
+    }
+
+    //Theoretical max, in practice this is extremely rare
+    float greatestDistance = (tileSize * tileSize) * 3.0f;
+    
+    //Gives us numbers between -0.5 and 0.5
+    output[id.xyz] = clamp(
+        output[id.xyz] + channel * ((1.0f * contribution - closestDist/greatestDistance - 0.5f)) * contribution, -1.0f, 1.0f);
+}
