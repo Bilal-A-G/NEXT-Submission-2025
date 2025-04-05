@@ -1,7 +1,6 @@
-My submission for Ubisoft NEXT 2025, in the technical art category, it consists of 2 major parts:
+My submission for Ubisoft NEXT 2025, in the technical art category, it has the following features:
 
 
-- A novel Wave function collapse algorithm implementation to procedurally generate a cabin/campground
-- A super extensible and performant terrain system, utilizing the marching cubes algorithm and GPU acceleration
-
-
+- A volumetric cloud implementation that is faster than Unity's HDRP clouds
+- Lots of detailed trees/vegetation that is being rendered at realtime due to LODs, and instancing
+- Post processing effects like colour correction and tonemapping for a cinematic feel
